@@ -10,12 +10,13 @@ import inspect
 from utils import *
 import random, copy
 from functools import partial
+import matplotlib.pyplot as plt
 
 # import my files
-#import agents as ag
 from agents import *
 from objects import *
 from display import *
+from comms import *
 
 '''Implement Agents and Environments (Chapters 1-2).
 
@@ -57,9 +58,11 @@ class Environment:
     """
 
     def __init__(self,):
+        self.t = 0
         self.objects = []
         self.agents = []
         self.perceptors = {}
+        self.communicator = Communicator(self)
 
     # Mark: What does this do?  It isn't checked in the Environment class's add_object.
     object_classes = [] ## List of classes that can go into environment
@@ -95,16 +98,29 @@ class Environment:
         do.  If there are interactions between them, you'll need to
         override this method.'''
         if not self.is_done():
+            # increment time counter
+            self.t += 1
+
             # for each agent
             # run agent.program with the agent's preception as an input
             # agent's perception = Env.precept(agent)
 
-            # TODO: Implement comms
-            #for a in self.agents:
-            #    agents_seen = self.communication_network(a)
-            #    a.state_update(self.communicate(a))
 
-            actions = [agent.program(self.percept(agent))
+            for a in self.agents:
+                a.percepts = self.percept(a)
+
+            # TODO: Implement comms
+            self.communicator.run_comms(self.agents)
+
+#            comms = {}
+#            for to_agent in self.agents:
+#                agents_seen = self.communicator.get_comms_network(to_agent)
+#                comms[to_agent] = [self.communicator.communicate(percepts[from_agent],from_agent,to_agent) for from_agent in agents_seen]
+
+#            for to_agent in self.agents:
+#                percepts = to_agent.merge_comms
+
+            actions = [agent.program(agent.percepts)
                        for agent in self.agents]
 
             # for each agent-action pair, have the environment process the actions
@@ -134,10 +150,8 @@ class Environment:
         return obj
 
     def add_perceptor_for_agent(self, agent):
-        print(self.perceptors)
         for pertype in agent.perceptorTypes: # for each type of perceptor for the agent
             if not [p for p in self.perceptors.values() if isinstance(p, pertype)]: # if the perceptor doesn't exist yet
-                print('creating perceptor of type %s' % pertype.__name__)
                 self.perceptors[pertype.__name__] = pertype(self) # add the name:perceptor pair to the dictionary
 
 
@@ -299,10 +313,21 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
                     e.add_object(DeadCell(), (x,y))
     elif config=='full dirt':
         # Fill a square area with dirt
-        if False:
-            for x in range(0,e.width):
-                for y in range(0,e.height):
-                    if e.find_at(Wall,(x,y)): e.add_object(Dirt(),location=(x,y))
+        for x in range(0,e.width):
+            for y in range(0,e.height):
+                if not e.find_at(Wall,(x,y)): e.add_object(Dirt(),location=(x,y))
+
+        # extend exogenous_change with function to detect if no dirt is left
+        old_exogenous_chage = e.exogenous_change
+        def new_exogenous_change(self):
+            old_exogenous_chage()
+            if not [d for d in self.objects_of_type(Dirt) if isinstance(d.location, tuple)]:
+                for a in self.agents:
+                    a.alive = False
+                    a.performance = self.t
+
+        e.exogenous_change = MethodType(new_exogenous_change, e)
+
     elif config=='center walls w/ random dirt and fire':
         for x in range(int(e.width/2-5),int(e.width/2+5)):
             for y in range(int(e.height/2-5),int(e.height/2+5)):
@@ -355,7 +380,7 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
     return e
 #______________________________________________________________________________
 
-def compare_agents(EnvFactory, AgentFactories, n=10, steps=1000):
+def compare_agents(EnvFactory, AgentFactories, n=10, steps=100):
     '''See how well each of several agents do in n instances of an environment.
     Pass in a factory (constructor) for environments, and several for agents.
     Create n instances of the environment, and run each agent in copies of
@@ -374,7 +399,7 @@ def test_agent(AgentFactory, steps, envs):
             agent = AgentFactory()
             env.add_object(agent)
             env.run(steps)
-            total += agent.performance
+            total += env.t
     return float(total)/len(envs)
 
 #______________________________________________________________________________
@@ -393,8 +418,14 @@ def test1():
 
 def test2():
     EnvFactory = partial(NewVacuumEnvironment,width=10,height=10,config="full dirt")
-    AgentFactory = partial(NewRandomReflexAgent, debug=False)
-    print(compare_agents(EnvFactory, [AgentFactory]*2, n=10, steps=1000))
+    #AgentFactory = partial(NewGreedyAgentWithRangePerception, debug=False)
+    sensor_radii = range(10)
+    results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=i) for i in sensor_radii], n=10, steps=2000)
+    print(results)
+    plt.plot(sensor_radii,[r[1] for r in results],'r-')
+    plt.xlabel('sensor radius')
+    plt.ylabel('time to fully clean')
+    plt.show()
 
 def test3():
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
@@ -402,7 +433,7 @@ def test3():
 
     # Create agents on left wall
     for i in range(1,19):
-        e.add_object(GreedyAgentWithRangePercetion(), location=(1,i)).id = i
+        e.add_object(GreedyAgentWithRangePerception(), location=(1,i)).id = i
 
     ef.configure_display()
     ef.run()
@@ -410,9 +441,9 @@ def test3():
 
 def main():
     # set a seed to provide repeatable outcomes each run
-    random.seed(0) # set seed to None to remove the seed and have different outcomes
+    random.seed(1) # set seed to None to remove the seed and have different outcomes
 
-    test3()
+    test2()
 
 if __name__ == "__main__":
     # execute only if run as a script
