@@ -311,10 +311,29 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
                     e.add_object(Wall(), (x,y))
                 else:
                     e.add_object(DeadCell(), (x,y))
+
     elif config=='full dirt':
         # Fill a square area with dirt
         for x in range(0,e.width):
             for y in range(0,e.height):
+                if not e.find_at(Wall,(x,y)): e.add_object(Dirt(),location=(x,y))
+
+        # extend exogenous_change with function to detect if no dirt is left
+        old_exogenous_chage = e.exogenous_change
+        def new_exogenous_change(self):
+            old_exogenous_chage()
+            if not [d for d in self.objects_of_type(Dirt) if isinstance(d.location, tuple)]:
+                for a in self.agents:
+                    a.alive = False
+                    a.performance = self.t
+
+        e.exogenous_change = MethodType(new_exogenous_change, e)
+
+    elif config=='sparse dirt':
+        # Fill a square area with dirt every n cells
+        stp = 3
+        for x in range(0,e.width,stp):
+            for y in range(0,e.height,stp):
                 if not e.find_at(Wall,(x,y)): e.add_object(Dirt(),location=(x,y))
 
         # extend exogenous_change with function to detect if no dirt is left
@@ -433,7 +452,7 @@ def test_agent(AgentFactory, steps, envs):
 
 
 def test0():
-    e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
+    e = NewVacuumEnvironment(width=20,height=20,config="sparse dirt")
     ef = EnvFrame(e,cellwidth=30)
 
     # Create agents on left wall
@@ -481,9 +500,9 @@ def test3():
 
 def main():
     # set a seed to provide repeatable outcomes each run
-    random.seed(1) # set seed to None to remove the seed and have different outcomes
+    random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test2()
+    test0()
 
 if __name__ == "__main__":
     # execute only if run as a script
