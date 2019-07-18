@@ -328,6 +328,33 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
 
         e.exogenous_change = MethodType(new_exogenous_change, e)
 
+    elif config=='random dirt':
+        for x in range(50):
+            loc = (random.randrange(width), random.randrange(width))
+            if not (e.find_at(Dirt, loc) or e.find_at(Wall, loc)):
+                e.add_object(Dirt(), loc)
+        # extend exogenous_change with function to detect if no dirt is left
+        old_exogenous_chage = e.exogenous_change
+        def new_exogenous_change(self):
+            old_exogenous_chage()
+            if not [d for d in self.objects_of_type(Dirt) if isinstance(d.location, tuple)]:
+                for a in self.agents:
+                    a.alive = False
+                    a.performance = self.t
+
+        e.exogenous_change = MethodType(new_exogenous_change, e)
+
+    elif config=='random dirt and wall':
+        for x in range(int(e.width/2-5),int(e.width/2+5)):
+            for y in range(int(e.height/2-5),int(e.height/2+5)):
+                if ((x == int(e.width/2-5)) or (x == int(e.width/2+4)) or
+                    (y == int(e.height/2-5)) or (y == int(e.height/2+4))):
+                    e.add_object(Wall(), (x,y))
+        for x in range(50):
+            loc = (random.randrange(width), random.randrange(width))
+            if not (e.find_at(Dirt, loc) or e.find_at(Wall, loc) or (loc[0] > 5 and loc[0]< 14) and loc[1] > 5 and loc[1] < 14):
+                e.add_object(Dirt(), loc)
+
     elif config=='center walls w/ random dirt and fire':
         for x in range(int(e.width/2-5),int(e.width/2+5)):
             for y in range(int(e.height/2-5),int(e.height/2+5)):
@@ -404,6 +431,19 @@ def test_agent(AgentFactory, steps, envs):
 
 #______________________________________________________________________________
 
+
+def test0():
+    e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
+    ef = EnvFrame(e,cellwidth=30)
+
+    # Create agents on left wall
+
+    e.add_object(GreedyAgentWithRangePerception(sensor_radius=3))
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
 def test1():
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,cellwidth=30)
@@ -417,7 +457,7 @@ def test1():
     ef.mainloop()
 
 def test2():
-    EnvFactory = partial(NewVacuumEnvironment,width=10,height=10,config="full dirt")
+    EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     #AgentFactory = partial(NewGreedyAgentWithRangePerception, debug=False)
     sensor_radii = range(10)
     results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=i) for i in sensor_radii], n=10, steps=2000)
@@ -432,7 +472,7 @@ def test3():
     ef = EnvFrame(e,cellwidth=30)
 
     # Create agents on left wall
-    for i in range(1,19):
+    for i in range(1,10):
         e.add_object(GreedyAgentWithRangePerception(), location=(1,i)).id = i
 
     ef.configure_display()
