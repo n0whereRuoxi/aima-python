@@ -75,6 +75,7 @@ class EnvFrame(tk.Frame):
         self.delay = 0.1
         self.env = env
         self.cellwidth = cellwidth
+        self.time_label = None
 
         tk.Frame.__init__(self, None, width=min((cellwidth + 2) * env.width,self.root.winfo_screenwidth()),
                           height=min((cellwidth + 2) * env.height, self.root.winfo_screenheight()))
@@ -91,7 +92,8 @@ class EnvFrame(tk.Frame):
                          command=lambda d: setattr(self, 'delay', d))
         scale.set(self.delay)
         scale.pack(side='left')
-
+        self.time_label = tk.Label(toolbar, text='')
+        self.time_label.pack(side='right')
 
         # Canvas for drawing on
         self.canvas = tk.Canvas(self, width=(cellwidth + 1) * env.width,
@@ -237,4 +239,5 @@ class EnvFrame(tk.Frame):
                 self.display_object(obj)
 
         self.canvas.tag_lower('Dirt')
+        self.time_label.config(text='time = %s' % self.env.t)
 #______________________________________________________________________________

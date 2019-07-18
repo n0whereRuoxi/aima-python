@@ -452,7 +452,7 @@ def test_agent(AgentFactory, steps, envs):
 
 
 def test0():
-    e = NewVacuumEnvironment(width=20,height=20,config="sparse dirt")
+    e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,cellwidth=30)
 
     # Create agents on left wall
