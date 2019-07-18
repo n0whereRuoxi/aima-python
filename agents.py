@@ -6,9 +6,10 @@ This file holds the agents.
 import random, copy, collections
 from objects import Object
 from perception import *
-
+from comms import *
 import numpy as np
 from scipy import spatial
+import uuid
 # ______________________________________________________________________________
 
 class Agent(Object):
@@ -21,16 +22,13 @@ class Agent(Object):
     build and maintain its own model.  There is an optional slots, .performance, which is a number giving the
     performance measure of the agent in its environment.
     '''
-
-    perceptorTypes = [BasicPerceptor]
-
     def __init__(self):
         def program(percept):
             return raw_input('Percept=%s; action? ' % percept)
 
         self.program = program
         self.alive = True
-
+        self.perceptorTypes = [BasicPerceptor]
         self.holding = []
 
         self.performance = 0
@@ -82,13 +80,10 @@ def NewRandomXYAgent(debug=False):
 
 class RandomReflexAgent(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
-
-    perceptorTypes = [DirtyPerceptor, BumpPerceptor]
-
     def __init__(self, actions):
         Agent.__init__(self)
         self.actions = actions
-
+        self.perceptorTypes = [DirtyPerceptor, BumpPerceptor]
         def program(percept):
             if percept['Dirty']:
                 return "Grab"
@@ -103,10 +98,10 @@ def find_nearest(agent_location, dirts):
         return dirts[0]
     return dirts[spatial.KDTree(np.asarray(dirts)).query(np.asarray(agent_location))[1]]
 
-def go_to(agent_location, agent_heading, nearest_dirt):
+def go_to(agent_location, agent_heading, nearest_dirt, bump):
     if agent_heading[0] == 0:
         '''up or down'''
-        if (nearest_dirt[1] - agent_location[1]) * agent_heading[1] > 0:
+        if (nearest_dirt[1] - agent_location[1]) * agent_heading[1] > 0 and not bump:
             return 'Forward'
         else:
             if nearest_dirt[0] - agent_location[0] > 0:
@@ -122,7 +117,7 @@ def go_to(agent_location, agent_heading, nearest_dirt):
                     return 'TurnRight'
     else:
         '''left or right'''
-        if (nearest_dirt[0] - agent_location[0]) * agent_heading[0] > 0:
+        if (nearest_dirt[0] - agent_location[0]) * agent_heading[0] > 0 and not bump:
             return 'Forward'
         else:
             if nearest_dirt[1] - agent_location[1] > 0:
@@ -139,26 +134,35 @@ def go_to(agent_location, agent_heading, nearest_dirt):
 
 class GreedyAgentWithRangePerception(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
-    perceptorTypes = [DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
-    def __init__(self, sensor_radius=10):
+
+    def __init__(self, sensor_radius=10, communication=False):
         Agent.__init__(self)
+        self.perceptorTypes = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
+        self.communicator = Communicator if communication else None
         self.sensor_r = sensor_radius
+        self.comms = {}
         # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
         # def turn_heading(heading, inc, headings=[(1, 0), (0, 1), (-1, 0), (0, -1)]):
         #     "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
         #     return headings[(headings.index(heading) + inc) % len(headings)]
-        def program(percept):
-            if percept['Dirty']:
+        self.dirts = []
+        def program(percepts):
+            if percepts['Dirty']:
                 return 'Grab'
             else:
-                dirts = [o[1] for o in percept['Objects'] if o[0]=='Dirt']
+                # collect percept data
+                dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
                 agent_location = (0, 0)
-                agent_heading = percept['Compass']
+                agent_heading = percepts['Compass']
+                # collect communication data
+                for comm in self.comms.values():
+                    dirts += [(o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]) for o in comm['Objects'] if o[0] == 'Dirt']
                 if dirts:
+                    self.dirts = dirts
                     nearest_dirt = find_nearest(agent_location, dirts)
-                    command = go_to(agent_location, agent_heading, nearest_dirt)
+                    command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                     return command
-                return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward'])
+                return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward'])
         self.program = program
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10):
@@ -172,24 +176,23 @@ def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10):
 
 class GreedyAgent(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
-    perceptorTypes = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
-
     def __init__(self):
         Agent.__init__(self)
         # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
         # def turn_heading(heading, inc, headings=[(1, 0), (0, 1), (-1, 0), (0, -1)]):
         #     "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
         #     return headings[(headings.index(heading) + inc) % len(headings)]
-        def program(percept):
-            if percept['Dirty']:
+        self.perceptorTypes = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
+        def program(percepts):
+            if percepts['Dirty']:
                 return "Grab"
             else:
-                dirts = [o[1] for o in percept['Objects'] if o[0]=='Dirt']
-                agent_location = percept['GPS']
-                agent_heading = percept['Compass']
+                dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
+                agent_location = percepts['GPS']
+                agent_heading = percepts['Compass']
                 if dirts:
                     nearest_dirt = find_nearest(agent_location, dirts)
-                    command = go_to(agent_location, agent_heading, nearest_dirt)
+                    command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                     return command
                 return ''
         self.program = program

@@ -62,7 +62,7 @@ class Environment:
         self.objects = []
         self.agents = []
         self.perceptors = {}
-        self.communicator = Communicator(self)
+        self.communicator = None
 
     # Mark: What does this do?  It isn't checked in the Environment class's add_object.
     object_classes = [] ## List of classes that can go into environment
@@ -110,16 +110,13 @@ class Environment:
                 a.percepts = self.percept(a)
 
             # TODO: Implement comms
-            self.communicator.run_comms(self.agents)
+            if self.communicator:
+                for from_agent in self.agents:
+                    agents_seen = self.communicator.get_comms_network(from_agent)
+                    for to_agent in agents_seen:
+                        self.communicator.communicate(from_agent.percepts, from_agent, to_agent)
 
-#            comms = {}
-#            for to_agent in self.agents:
-#                agents_seen = self.communicator.get_comms_network(to_agent)
-#                comms[to_agent] = [self.communicator.communicate(percepts[from_agent],from_agent,to_agent) for from_agent in agents_seen]
-
-#            for to_agent in self.agents:
-#                percepts = to_agent.merge_comms
-
+            # generate actions
             actions = [agent.program(agent.percepts)
                        for agent in self.agents]
 
@@ -146,6 +143,7 @@ class Environment:
         if isinstance(obj, Agent):
             obj.performance = 0
             self.add_perceptor_for_agent(obj)
+            self.add_communicator_for_agent(obj)
             self.agents.append(obj)
         return obj
 
@@ -153,6 +151,10 @@ class Environment:
         for pertype in agent.perceptorTypes: # for each type of perceptor for the agent
             if not [p for p in self.perceptors.values() if isinstance(p, pertype)]: # if the perceptor doesn't exist yet
                 self.perceptors[pertype.__name__] = pertype(self) # add the name:perceptor pair to the dictionary
+
+    def add_communicator_for_agent(self, agent):
+        if agent.communicator:
+            self.communicator = agent.communicator(self) # set the communicator equal to the agent communicator
 
 
 class XYEnvironment(Environment):
@@ -348,7 +350,7 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
         e.exogenous_change = MethodType(new_exogenous_change, e)
 
     elif config=='random dirt':
-        for x in range(50):
+        for x in range(100):
             loc = (random.randrange(width), random.randrange(width))
             if not (e.find_at(Dirt, loc) or e.find_at(Wall, loc)):
                 e.add_object(Dirt(), loc)
@@ -491,18 +493,53 @@ def test3():
     ef = EnvFrame(e,cellwidth=30)
 
     # Create agents on left wall
-    for i in range(1,10):
-        e.add_object(GreedyAgentWithRangePerception(), location=(1,i)).id = i
+    for i in range(1,19):
+        e.add_object(GreedyAgentWithRangePerception(sensor_radius = 6), location=(1,i)).id = i
 
     ef.configure_display()
     ef.run()
     ef.mainloop()
 
+def test4():
+    e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
+    ef = EnvFrame(e,cellwidth=30)
+
+    # Create agents on left wall
+    for i in range(1,5):
+        e.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = True), location=(1,i * 3)).id = i
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
+def test5():
+    EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
+    envs = [EnvFactory() for i in range(30)]
+    "Return the mean score of running an agent in each of the envs, for steps"
+    results = []
+    for communication in [True, False]:
+        total = 0
+        steps = 2000
+        i = 0
+        for env in copy.deepcopy(envs):
+            i+=1
+            with Timer(name='Simulation Timer - Agent=%s' % i, format='%.4f'):
+                for i in range(1,5):
+                    env.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = communication), location=(1,i * 3)).id = i
+                env.run(steps)
+                total += env.t
+        results.append(float(total)/len(envs))
+    plt.plot(['True', 'False'],[r for r in results],'r-')
+    plt.xlabel('communication')
+    plt.ylabel('time to fully clean')
+    plt.show()
+
 def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test0()
+    test4()
+    test5()
 
 if __name__ == "__main__":
     # execute only if run as a script
