@@ -98,10 +98,10 @@ def find_nearest(agent_location, dirts):
         return dirts[0]
     return dirts[spatial.KDTree(np.asarray(dirts)).query(np.asarray(agent_location))[1]]
 
-def go_to(agent_location, agent_heading, nearest_dirt):
+def go_to(agent_location, agent_heading, nearest_dirt, bump):
     if agent_heading[0] == 0:
         '''up or down'''
-        if (nearest_dirt[1] - agent_location[1]) * agent_heading[1] > 0:
+        if (nearest_dirt[1] - agent_location[1]) * agent_heading[1] > 0 and not bump:
             return 'Forward'
         else:
             if nearest_dirt[0] - agent_location[0] > 0:
@@ -117,7 +117,7 @@ def go_to(agent_location, agent_heading, nearest_dirt):
                     return 'TurnRight'
     else:
         '''left or right'''
-        if (nearest_dirt[0] - agent_location[0]) * agent_heading[0] > 0:
+        if (nearest_dirt[0] - agent_location[0]) * agent_heading[0] > 0 and not bump:
             return 'Forward'
         else:
             if nearest_dirt[1] - agent_location[1] > 0:
@@ -145,6 +145,7 @@ class GreedyAgentWithRangePerception(XYAgent):
         # def turn_heading(heading, inc, headings=[(1, 0), (0, 1), (-1, 0), (0, -1)]):
         #     "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
         #     return headings[(headings.index(heading) + inc) % len(headings)]
+        self.dirts = []
         def program(percepts):
             if percepts['Dirty']:
                 return 'Grab'
@@ -155,13 +156,13 @@ class GreedyAgentWithRangePerception(XYAgent):
                 agent_heading = percepts['Compass']
                 # collect communication data
                 for comm in self.comms.values():
-                    print([(o[1][0] + comm['GPS'][0], o[1][1] + comm['GPS'][1]) for o in comm['Objects'] if o[0] == 'Dirt'])
-                    dirts += [(o[1][0] + comm['GPS'][0], o[1][1] + comm['GPS'][1]) for o in comm['Objects'] if o[0] == 'Dirt']
+                    dirts += [(o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]) for o in comm['Objects'] if o[0] == 'Dirt']
                 if dirts:
+                    self.dirts = dirts
                     nearest_dirt = find_nearest(agent_location, dirts)
-                    command = go_to(agent_location, agent_heading, nearest_dirt)
+                    command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                     return command
-                return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward'])
+                return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward'])
         self.program = program
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10):
@@ -191,7 +192,7 @@ class GreedyAgent(XYAgent):
                 agent_heading = percepts['Compass']
                 if dirts:
                     nearest_dirt = find_nearest(agent_location, dirts)
-                    command = go_to(agent_location, agent_heading, nearest_dirt)
+                    command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                     return command
                 return ''
         self.program = program

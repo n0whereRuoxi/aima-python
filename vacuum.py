@@ -493,6 +493,27 @@ def test4():
     ef.run()
     ef.mainloop()
 
+def test5():
+    EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
+    envs = [EnvFactory() for i in range(30)]
+    "Return the mean score of running an agent in each of the envs, for steps"
+    results = []
+    for communication in [True, False]:
+        total = 0
+        steps = 2000
+        i = 0
+        for env in copy.deepcopy(envs):
+            i+=1
+            with Timer(name='Simulation Timer - Agent=%s' % i, format='%.4f'):
+                for i in range(1,5):
+                    env.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = communication), location=(1,i * 3)).id = i
+                env.run(steps)
+                total += env.t
+        results.append(float(total)/len(envs))
+    plt.plot(['True', 'False'],[r for r in results],'r-')
+    plt.xlabel('communication')
+    plt.ylabel('time to fully clean')
+    plt.show()
 
 def main():
     # set a seed to provide repeatable outcomes each run

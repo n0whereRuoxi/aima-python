@@ -121,9 +121,8 @@ class EnvFrame(tk.Frame):
                 c.create_line(j * (cellwidth + 1), 0, j * (cellwidth + 1), env.width * (cellwidth + 1))
                 c.pack(expand=1, fill='both')
         self.pack()
-
-        self.class2file = {'':'', 
-                        'RandomReflexAgent':'robot-%s',
+        
+        self.class2file = {'':'',
                         'GreedyAgentWithRangePerception':'robot-%s',
                         'GreedyAgent':'robot-%s',
                         'Dirt':'dirt',
@@ -171,6 +170,10 @@ class EnvFrame(tk.Frame):
         else:
             obj_string = str([str(o)[:len(str(o))-1] + ' performance=%s>' % o.performance if hasattr(o, 'performance') else str(o) for o in objs])
         print('Cell (%s, %s) contains %s' %  (loc[0], loc[1], obj_string))
+        for obj in objs:
+            if isinstance(obj, Agent) and hasattr(obj, 'comms'):
+                print(obj.comms)
+                print(obj.dirts)
 
     def middle_click(self, event):
         pass
