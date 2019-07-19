@@ -149,12 +149,19 @@ class Environment:
 
     def add_perceptor_for_agent(self, agent):
         for pertype in agent.perceptorTypes: # for each type of perceptor for the agent
-            if not [p for p in self.perceptors.values() if isinstance(p, pertype)]: # if the perceptor doesn't exist yet
+            if not [p for p in self.perceptors.values() if type(p) is pertype]: # if the perceptor doesn't exist yet
                 self.perceptors[pertype.__name__] = pertype(self) # add the name:perceptor pair to the dictionary
 
     def add_communicator_for_agent(self, agent):
         if agent.communicator:
-            self.communicator = agent.communicator(self) # set the communicator equal to the agent communicator
+            if self.communicator: # if the communicator exists...
+                if not type(self.communicator) is agent.communicator:
+                    # if the communicator exists, but is a different type, throw and error (TODO: implement multiple communicators)
+                    raise ValueError('Communicator already exists')
+                else:  # if communicator exists and is the same type, don't recreate, just pass
+                    pass
+            else: # if it doesn't exist, create a new communicator based on the agent's communicator definition
+                self.communicator = agent.communicator(self) # set the communicator equal to the agent communicator
 
 
 class XYEnvironment(Environment):
@@ -539,7 +546,6 @@ def main():
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
     test4()
-    test5()
 
 if __name__ == "__main__":
     # execute only if run as a script
