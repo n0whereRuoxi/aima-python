@@ -312,6 +312,14 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
     # Generate walls with dead cells in the center
     if config==None:
         pass
+    elif config == 'shape of eight':
+        for x in [2,3]:
+            for y in [2,3]:
+                e.add_object(Wall(), (x,y))
+        for x in [2,3]:
+            for y in [5,6]:
+                e.add_object(Wall(), (x,y))
+        e.add_object(Dirt(),location=(4,5))
     elif config=='center walls':
         for x in range(int(e.width/2-5),int(e.width/2+5)):
             for y in range(int(e.height/2-5),int(e.height/2+5)):
@@ -541,11 +549,23 @@ def test5():
     plt.ylabel('time to fully clean')
     plt.show()
 
+def test6():
+    e = NewVacuumEnvironment(width=6,height=9,config="shape of eight")
+    ef = EnvFrame(e,cellwidth=30)
+
+    # Create agents on left wall
+    e.add_object(GreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
+
 def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test4()
+    test6()
 
 if __name__ == "__main__":
     # execute only if run as a script
