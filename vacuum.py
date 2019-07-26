@@ -74,6 +74,12 @@ class Environment:
             agentpercept.update(self.perceptors[per.__name__].percept(agent))
         return agentpercept
 
+    def communicate(self, from_agent):
+        if self.communicator:
+            agents_seen = self.communicator.get_comms_network(from_agent)
+            for to_agent in agents_seen:
+                self.communicator.communicate(from_agent.percepts, from_agent, to_agent)
+
     def execute_action(self, agent, action):
         "Change the world to reflect this action. Override this."
         raise NotImplementedError
@@ -101,20 +107,18 @@ class Environment:
             # increment time counter
             self.t += 1
 
-            # for each agent
-            # run agent.program with the agent's preception as an input
-            # agent's perception = Env.precept(agent)
-
-
             for a in self.agents:
                 a.percepts = self.percept(a)
 
-            # TODO: Implement comms
-            if self.communicator:
-                for from_agent in self.agents:
-                    agents_seen = self.communicator.get_comms_network(from_agent)
-                    for to_agent in agents_seen:
-                        self.communicator.communicate(from_agent.percepts, from_agent, to_agent)
+            for from_agent in self.agents:
+                self.communicate(from_agent)
+
+            for a in self.agents:
+                a.percepts = a.state_estimator(a.percepts, a.comms)
+
+            # for each agent
+            # run agent.program with the agent's preception as an input
+            # agent's perception = Env.precept(agent)
 
             # generate actions
             actions = [agent.program(agent.percepts)

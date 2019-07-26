@@ -132,6 +132,12 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
                 else:
                     return 'TurnLeft'
 
+def state_estimator(percepts, comms):
+    for comm in comms.values():
+        percepts['Objects'] += [(o[0],(o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
+                o in comm['Objects']]
+    return percepts
+
 class GreedyAgentWithRangePerception(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
 
@@ -155,8 +161,8 @@ class GreedyAgentWithRangePerception(XYAgent):
                 agent_location = (0, 0)
                 agent_heading = percepts['Compass']
                 # collect communication data
-                for comm in self.comms.values():
-                    dirts += [(o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]) for o in comm['Objects'] if o[0] == 'Dirt']
+                dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
+
                 if dirts:
                     self.dirts = dirts
                     nearest_dirt = find_nearest(agent_location, dirts)
@@ -164,6 +170,7 @@ class GreedyAgentWithRangePerception(XYAgent):
                     return command
                 return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward'])
         self.program = program
+        self.state_estimator = state_estimator
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10):
     "Randomly choose one of the actions from the vaccum environment."

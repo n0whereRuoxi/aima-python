@@ -13,16 +13,11 @@ class Communicator():
         to_agent.comms[from_agent.id] = message
         return None
 
-    def run_comms(self, agents):
-        for to_a in agents:
-            network = self.get_comms_network(to_a) # this could be moved to the line below, but leaving it as two lines for readability
-            a.messages = [self.communicate('percept', to_a, from_a) for from_a in network]
-
 class BroadcastCommunicator(Communicator):
 
     def get_comms_network(self, to_agent):
         range = 5
-        return [o for o in self.env.objects_near(to_agent.location, range) if isinstance(o, agents.Agent)]
+        return [o for o in self.env.objects_near(to_agent.location, range) if isinstance(o, agents.Agent) and to_agent != o]
 
     def communicate(self, message, to_agent, from_agent):
         pass
