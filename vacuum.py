@@ -534,8 +534,8 @@ def test5():
         i = 0
         for env in copy.deepcopy(envs):
             i+=1
-            with Timer(name='Simulation Timer - Agent=%s' % i, format='%.4f'):
-                for i in range(1,5):
+            with Timer(name='Simulation Timer - Comms=%s - Environment=%s' % (communication, i), format='%.4f'):
+                for j in range(1,5):
                     env.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = communication), location=(1,i * 3)).id = i
                 env.run(steps)
                 total += env.t
@@ -549,7 +549,7 @@ def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test4()
+    test5()
 
 if __name__ == "__main__":
     # execute only if run as a script

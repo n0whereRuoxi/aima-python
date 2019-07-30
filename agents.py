@@ -28,8 +28,9 @@ class Agent(Object):
 
         self.program = program
         self.alive = True
-        self.perceptorTypes = [BasicPerceptor]
+        self.perceptor_types = [BasicPerceptor]
         self.holding = []
+        self.current_task = ('None',0) # task and current duration
 
         self.performance = 0
 
@@ -132,12 +133,6 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
                 else:
                     return 'TurnLeft'
 
-def state_estimator(percepts, comms):
-    for comm in comms.values():
-        percepts['Objects'] += [(o[0],(o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
-                o in comm['Objects']]
-    return percepts
-
 class GreedyAgentWithRangePerception(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
 
@@ -170,6 +165,13 @@ class GreedyAgentWithRangePerception(XYAgent):
                     return command
                 return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward'])
         self.program = program
+
+        def state_estimator(percepts, comms):
+            for comm in comms.values():
+                percepts['Objects'] += [(o[0], (
+                o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
+                                        o in comm['Objects']]
+            return percepts
         self.state_estimator = state_estimator
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10):

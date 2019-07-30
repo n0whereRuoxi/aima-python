@@ -18,6 +18,3 @@ class BroadcastCommunicator(Communicator):
     def get_comms_network(self, to_agent):
         range = 5
         return [o for o in self.env.objects_near(to_agent.location, range) if isinstance(o, agents.Agent) and to_agent != o]
-
-    def communicate(self, message, to_agent, from_agent):
-        pass
