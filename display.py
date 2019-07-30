@@ -116,11 +116,11 @@ class EnvFrame(tk.Frame):
         self.canvas.bind('<Button-3>', self.right_click)
         if cellwidth:
             c = self.canvas
-            for i in range(1, env.width + 1):
-                c.create_line(0, i * (cellwidth + 1), env.height * (cellwidth + 1), i * (cellwidth + 1))
+            for i in range(1, env.height + 1):
+                c.create_line(0, i * (cellwidth + 1), env.width * (cellwidth + 1), i * (cellwidth + 1))
                 c.pack(expand=1, fill='both')
-            for j in range(1,env.height + 1):
-                c.create_line(j * (cellwidth + 1), 0, j * (cellwidth + 1), env.width * (cellwidth + 1))
+            for j in range(1,env.width + 1):
+                c.create_line(j * (cellwidth + 1), 0, j * (cellwidth + 1), env.height * (cellwidth + 1))
                 c.pack(expand=1, fill='both')
         self.pack()
         
