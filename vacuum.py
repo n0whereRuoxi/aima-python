@@ -114,7 +114,7 @@ class Environment:
                 self.communicate(from_agent)
 
             for a in self.agents:
-                a.percepts = a.state_estimator(a.percepts, a.comms)
+                if hasattr(a, "state_estimator"): a.percepts = a.state_estimator(a.percepts, a.comms)
 
             # for each agent
             # run agent.program with the agent's preception as an input
@@ -157,7 +157,7 @@ class Environment:
                 self.perceptors[pertype.__name__] = pertype(self) # add the name:perceptor pair to the dictionary
 
     def add_communicator_for_agent(self, agent):
-        if agent.communicator:
+        if hasattr(agent, 'communicator') and agent.communicator:
             if self.communicator: # if the communicator exists...
                 if not type(self.communicator) is agent.communicator:
                     # if the communicator exists, but is a different type, throw and error (TODO: implement multiple communicators)
@@ -500,7 +500,7 @@ def test2():
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     #AgentFactory = partial(NewGreedyAgentWithRangePerception, debug=False)
     sensor_radii = range(10)
-    results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=i) for i in sensor_radii], n=10, steps=2000)
+    results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=r) for r in sensor_radii], n=10, steps=2000)
     print(results)
     plt.plot(sensor_radii,[r[1] for r in results],'r-')
     plt.xlabel('sensor radius')
@@ -523,9 +523,10 @@ def test4():
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,cellwidth=30)
 
-    # Create agents on left wall
-    for i in range(1,5):
-        e.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = True), location=(1,i * 3)).id = i
+    # Create agents on the four corners
+    for x in range(2):
+        for y in range(2):
+            e.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = True), location=(1 + x*(e.width-3),1 + y*(e.height-3))).id = x*2+y+1
 
     ef.configure_display()
     ef.run()
@@ -543,12 +544,14 @@ def test5():
         for env in copy.deepcopy(envs):
             i+=1
             with Timer(name='Simulation Timer - Comms=%s - Environment=%s' % (communication, i), format='%.4f'):
-                for j in range(1,5):
-                    env.add_object(GreedyAgentWithRangePerception(sensor_radius = 6, communication = communication), location=(1,i * 3)).id = i
+                for x in range(2):
+                    for y in range(2):
+                        env.add_object(GreedyAgentWithRangePerception(sensor_radius=6, communication=True),
+                                     location=(1 + x * (env.width - 3), 1 + y * (env.height - 3))).id = x*2+y+1
                 env.run(steps)
                 total += env.t
         results.append(float(total)/len(envs))
-    plt.plot(['True', 'False'],[r for r in results],'r-')
+    plt.bar(['True', 'False'],[r for r in results],align='center')
     plt.xlabel('communication')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -569,7 +572,8 @@ def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test6()
+    #test4()
+    test4()
 
 if __name__ == "__main__":
     # execute only if run as a script
