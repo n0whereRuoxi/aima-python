@@ -523,13 +523,42 @@ def test7():
             e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                            location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
 
-    e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(1, 1)).id = 1
-    e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(18, 18)).id = 2
+    for i in range(10):
+        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
 
     ef.configure_display()
     ef.run()
     ef.mainloop()
 
+def test8():
+    EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
+    envs = [EnvFactory() for i in range(10)]
+    "Return the mean score of running an agent in each of the envs, for steps"
+    results = []
+    drone_range = range(10,step=2)
+    for num_drones in drone_range:
+        total = 0
+        steps = 2000
+        i = 0
+        for env in copy.deepcopy(envs):
+            i+=1
+            with Timer(name='Simulation Timer - # of Drones=%s - Environment=%s' % (num_drones, i), format='%.4f'):
+                for x in range(2):
+                    for y in range(2):
+                        env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                                location=(1 + x * (env.width - 3), 1 + y * (env.height - 3))).id = x * 2 + y + 1
+                for n in range(num_drones):
+                    print(n)
+                    env.add_object(NewGreedyDrone(sensor_radius=10, communication=True),
+                                 location=(random.randrange(1, 18), random.randrange(1, 18))).id = n + 1
+
+                env.run(steps)
+                total += env.t
+        results.append(float(total)/len(envs))
+    plt.plot(drone_range,[r for r in results],'r-')
+    plt.xlabel('number of drones')
+    plt.ylabel('time to fully clean')
+    plt.show()
 
 def test_all():
     # TODO: Fix issue with not recreating tkinter windows properly
@@ -541,10 +570,11 @@ def test_all():
     test5()
     test6()
     test7()
+    test8()
 
 def main():
     # set a seed to provide repeatable outcomes each run
-    random.seed(None) # set seed to None to remove the seed and have different outcomes
+    random.seed(1) # set seed to None to remove the seed and have different outcomes
 
     test7()
     #test_all()  # not fully working just yet

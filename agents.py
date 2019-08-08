@@ -10,7 +10,7 @@ from comms import *
 from actuator import *
 import numpy as np
 from scipy import spatial
-from utils import distance2
+from utils import distance2, unit_vector, vector_add, scalar_vector_product, vector_average
 import uuid
 # ______________________________________________________________________________
 
@@ -261,21 +261,39 @@ class GreedyDrone(XYAgent):
             agent_heading = percepts['Compass']
             # collect communication data
             dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
+            drones = [d[1] for d in percepts['Objects'] if d[0] == 'GreedyDrone']
 
             if dirts:
                 self.dirts = dirts
 
                 close_dirts = [d for d in dirts if distance2(d,agent_location)<(sensor_radius*.75)**2]
                 if close_dirts: # if there are dirts close to you, move towards the center (of mass) of them
-                    x,y = zip(*close_dirts) # create two lists of just the x and y values for averaging
-                    target = (math.fsum(x)/len(x),math.fsum(y)/len(y))
+                    target = vector_average(close_dirts)
                 else: # if there are no dirts close to you, move towards the closest dirt
                     target = find_nearest(agent_location, dirts)
 
+                if drones:  # if there are drones around, move away from them by half your sensor radius
+                    targets = [target]
+                    for d in [d for d in drones if distance2(d, agent_location) < (sensor_radius * .5) ** 2]:
+                        targets.append(vector_add(scalar_vector_product(
+                            sensor_radius * .5, vector_add(agent_location, scalar_vector_product(-1, d))),
+                                                  agent_location))
+                    target = vector_average(targets)
+
                 command = go_to(agent_location, agent_heading, target, bump=False)
                 return command
-            # if there are no dirts, make a random action
-            return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
+            elif drones: # if no dirts, but there are drones around
+                targets = []
+                for d in [d for d in drones if distance2(d,agent_location)<(sensor_radius*.5)**2]:
+                    targets.append(vector_add(scalar_vector_product(sensor_radius*.5, vector_add(agent_location,scalar_vector_product(-1,d))),agent_location))
+                if targets:
+                    target = vector_average(targets)
+                    return go_to(agent_location, agent_heading, target, bump=False)
+                else:
+                    return random.choice(
+                        ['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
+            else:  # if no dirts and no drones, make a random action
+                return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
         self.program = program
 
         self.state_estimator = basic_state_estimator

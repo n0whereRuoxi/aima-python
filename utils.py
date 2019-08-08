@@ -139,6 +139,9 @@ def element_wise_product(X, Y):
     assert len(X) == len(Y)
     return [x * y for x, y in zip(X, Y)]
 
+def unit_vector(X):
+    dist = norm(X)
+    return [x/dist for x in X]
 
 def matrix_multiplication(X_M, *Y_M):
     """Return a matrix as a matrix-multiplication of X_M and arbitrary number of matrices *Y_M"""
@@ -181,6 +184,10 @@ def vector_to_diagonal(v):
 def vector_add(a, b):
     """Component-wise addition of two vectors."""
     return tuple(map(operator.add, a, b))
+
+
+def vector_average(vectors):
+    return [math.fsum(v)/len(v) for v in zip(*vectors)]
 
 
 def scalar_vector_product(X, Y):
