@@ -432,7 +432,7 @@ def test0():
 
 def test1():
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
-    ef = EnvFrame(e,cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
 
     # Create agents on left wall
     for i in range(1,19):
@@ -455,7 +455,7 @@ def test2():
 
 def test3():
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
-    ef = EnvFrame(e,cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
 
     # Create agents on left wall
     for i in range(1,19):
@@ -467,7 +467,7 @@ def test3():
 
 def test4():
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
-    ef = EnvFrame(e,cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
 
     # Create agents on the four corners
     for x in range(2):
@@ -504,7 +504,7 @@ def test5():
 
 def test6():
     e = NewVacuumEnvironment(width=6,height=9,config="shape of eight")
-    ef = EnvFrame(e,cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
 
     # Create agents on left wall
     e.add_object(NewGreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
@@ -515,7 +515,7 @@ def test6():
 
 def test7():
     e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
-    ef = EnvFrame(e, cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30)
 
     # Create agents on left wall
     for x in range(2):
@@ -535,7 +535,7 @@ def test8():
     envs = [EnvFactory() for i in range(10)]
     "Return the mean score of running an agent in each of the envs, for steps"
     results = []
-    drone_range = range(10,step=2)
+    drone_range = range(0,10,2)
     for num_drones in drone_range:
         total = 0
         steps = 2000
@@ -561,7 +561,6 @@ def test8():
     plt.show()
 
 def test_all():
-    # TODO: Fix issue with not recreating tkinter windows properly
     test0()
     test1()
     test2()
@@ -576,8 +575,8 @@ def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(1) # set seed to None to remove the seed and have different outcomes
 
-    test7()
-    #test_all()  # not fully working just yet
+    #test8()
+    test_all()  # not fully working just yet
 
 if __name__ == "__main__":
     # execute only if run as a script

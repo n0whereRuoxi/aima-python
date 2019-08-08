@@ -91,7 +91,7 @@ class RandomReflexAgent(XYAgent):
         self.actuator_types.extend([GrabObject, ReleaseObject])
         def program(percept):
             if percept['Dirty']:
-                return "Grab"
+                return "GrabObject"
             elif percept['Bump']:
                 return random.choice(['TurnRight','TurnLeft'])
             else:

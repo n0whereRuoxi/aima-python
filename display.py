@@ -1,6 +1,5 @@
 
 # TODO: Logging and playback
-# TODO: add timestep in the GUI "t=..."
 
 from types import MethodType
 import tkinter as tk
@@ -133,7 +132,6 @@ class EnvFrame(tk.Frame):
                         'Dirt':'dirt',
                         'Wall':'wall',
                         'Fire':'fire'}
-        # TODO: Add directional drone imagery (i.e. arrows)
         self.file2image = {'':None, 'robot-right':itk.PhotoImage(Image.open('img/robot-right.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'robot-left':itk.PhotoImage(Image.open('img/robot-left.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'robot-up':itk.PhotoImage(Image.open('img/robot-up.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
