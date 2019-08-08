@@ -429,9 +429,13 @@ def test_agent(AgentFactory, steps, envs):
 #______________________________________________________________________________
 
 
-def test0():
+def test0(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
-    ef = EnvFrame(e,cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on left wall
 
@@ -442,9 +446,13 @@ def test0():
     ef.mainloop()
 
 
-def test1():
+def test1(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
-    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on left wall
     for i in range(1,19):
@@ -455,20 +463,27 @@ def test1():
     ef.mainloop()
 
 
-def test2():
+def test2(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
-    #AgentFactory = partial(NewGreedyAgentWithRangePerception, debug=False)
     sensor_radii = range(10)
     results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=r) for r in sensor_radii], n=10, steps=2000)
     print(results)
     plt.plot(sensor_radii,[r[1] for r in results],'r-')
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
     plt.xlabel('sensor radius')
     plt.ylabel('time to fully clean')
     plt.show()
 
-def test3():
+def test3(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
-    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on left wall
     for i in range(1,19):
@@ -478,9 +493,13 @@ def test3():
     ef.run()
     ef.mainloop()
 
-def test4():
+def test4(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
-    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on the four corners
     for x in range(2):
@@ -491,7 +510,10 @@ def test4():
     ef.run()
     ef.mainloop()
 
-def test5():
+def test5(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     envs = [EnvFactory() for i in range(30)]
     "Return the mean score of running an agent in each of the envs, for steps"
@@ -511,13 +533,18 @@ def test5():
                 total += env.t
         results.append(float(total)/len(envs))
     plt.bar(['True', 'False'],[r for r in results],align='center')
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
     plt.xlabel('communication')
     plt.ylabel('time to fully clean')
     plt.show()
 
-def test6():
+def test6(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=6,height=9,config="shape of eight")
-    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on left wall
     e.add_object(NewGreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
@@ -526,9 +553,13 @@ def test6():
     ef.run()
     ef.mainloop()
 
-def test7():
+def test7(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
-    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30)
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
     # Create agents on left wall
     for x in range(2):
@@ -543,7 +574,10 @@ def test7():
     ef.run()
     ef.mainloop()
 
-def test8():
+def test8(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     envs = [EnvFactory() for i in range(10)]
     "Return the mean score of running an agent in each of the envs, for steps"
@@ -573,21 +607,18 @@ def test8():
     plt.ylabel('time to fully clean')
     plt.show()
 
-def test_all():
-    test0()
-    test1()
-    test2()
-    test3()
-    test4()
-    test5()
-    test6()
-    test7()
-    test8()
+def test_all(seed=None):
+    test0(seed)
+    test1(seed)
+    test2(seed)
+    test3(seed)
+    test4(seed)
+    test5(seed)
+    test6(seed)
+    test7(seed)
+    test8(seed)
 
 def main():
-    # set a seed to provide repeatable outcomes each run
-    random.seed(None) # set seed to None to remove the seed and have different outcomes
-
     test8()
     #test_all()  # not fully working just yet
 
