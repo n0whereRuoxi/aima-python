@@ -67,7 +67,7 @@ class Icon():
             self.hide()
 
 class EnvFrame(tk.Frame):
-    def __init__(self, env, root = tk.Tk(), title='Robot Vacuum Simulation', cellwidth=50, n=10):
+    def __init__(self, env, root, title='Robot Vacuum Simulation', cellwidth=50, n=10):
         update(self, cellwidth=cellwidth, running=False, delay=1.0)
         self.root = root
         self.running = 0

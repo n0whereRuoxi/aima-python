@@ -40,6 +40,17 @@ EnvFrame ## A graphical representation of the Environment
 
 '''
 
+# create a wrapper to initialize the seed
+old_seed = random.seed  # store the old seed function in old_seed
+
+def new_seed(a=None): # create a new_seed function to add new behavior before old_seed
+    if a is None:                   # if the seed is random
+        a = random.getrandbits(20)  # then create a random 20 bit number (1 in 1,000,000)
+    random.current_seed = a         # store the seed value in random.current_seed
+    old_seed(a)                     # run the old_seed function with the seed value (a)
+
+random.seed = new_seed  # replace the random.seed function with our new_seed function
+random.seed(None)       # generate a random seed to use have a known seed as the current value
 
 class Environment:
     """
@@ -430,6 +441,7 @@ def test0():
     ef.run()
     ef.mainloop()
 
+
 def test1():
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30)
@@ -441,6 +453,7 @@ def test1():
     ef.configure_display()
     ef.run()
     ef.mainloop()
+
 
 def test2():
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
@@ -548,7 +561,6 @@ def test8():
                         env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                                 location=(1 + x * (env.width - 3), 1 + y * (env.height - 3))).id = x * 2 + y + 1
                 for n in range(num_drones):
-                    print(n)
                     env.add_object(NewGreedyDrone(sensor_radius=10, communication=True),
                                  location=(random.randrange(1, 18), random.randrange(1, 18))).id = n + 1
 
@@ -556,6 +568,7 @@ def test8():
                 total += env.t
         results.append(float(total)/len(envs))
     plt.plot(drone_range,[r for r in results],'r-')
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
     plt.xlabel('number of drones')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -573,10 +586,10 @@ def test_all():
 
 def main():
     # set a seed to provide repeatable outcomes each run
-    random.seed(1) # set seed to None to remove the seed and have different outcomes
+    random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    #test8()
-    test_all()  # not fully working just yet
+    test8()
+    #test_all()  # not fully working just yet
 
 if __name__ == "__main__":
     # execute only if run as a script
