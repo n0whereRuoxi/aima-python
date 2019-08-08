@@ -508,7 +508,24 @@ def test6():
     ef = EnvFrame(e,cellwidth=30)
 
     # Create agents on left wall
-    e.add_object(GreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
+    e.add_object(NewGreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
+def test7():
+    e = NewVacuumEnvironment(width=6, height=9, config="random dirt")
+    ef = EnvFrame(e, cellwidth=30)
+
+    # Create agents on left wall
+    for x in range(2):
+        for y in range(2):
+            e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                           location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
+
+    for i in range(2):
+        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(1, 1)).id = i + 1
 
     ef.configure_display()
     ef.run()
@@ -524,12 +541,13 @@ def test_all():
     test4()
     test5()
     test6()
+    test7()
 
 def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    test4()
+    test7()
     #test_all()  # not fully working just yet
 
 if __name__ == "__main__":
