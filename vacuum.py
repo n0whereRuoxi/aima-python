@@ -170,7 +170,6 @@ class Environment:
     def add_actuator_for_agent(self, agent):
         for acttype in agent.actuator_types: # for each type of perceptor for the agent
             if not [act for act in self.actuators.values() if type(act) is acttype]: # if the perceptor doesn't exist yet
-                print('creating actuator - %s' % acttype.__name__)
                 self.actuators[acttype.__name__] = acttype(self) # add the name:perceptor pair to the dictionary
 
 
@@ -515,7 +514,7 @@ def test6():
     ef.mainloop()
 
 def test7():
-    e = NewVacuumEnvironment(width=6, height=9, config="random dirt")
+    e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
     ef = EnvFrame(e, cellwidth=30)
 
     # Create agents on left wall
@@ -524,8 +523,8 @@ def test7():
             e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                            location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
 
-    for i in range(2):
-        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(1, 1)).id = i + 1
+    e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(1, 1)).id = 1
+    e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(18, 18)).id = 2
 
     ef.configure_display()
     ef.run()

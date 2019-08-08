@@ -10,6 +10,7 @@ from comms import *
 from actuator import *
 import numpy as np
 from scipy import spatial
+from utils import distance2
 import uuid
 # ______________________________________________________________________________
 
@@ -136,6 +137,22 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
                 else:
                     return 'TurnLeft'
 
+def basic_state_estimator(percepts, comms):
+    if not 'Objects' in percepts: percepts['Objects'] = [] # if percepts['Objects'] is empty, initialize it as an empty list
+    for comm in comms.values():
+        if 'Objects' in comm: percepts['Objects'] += [(o[0], (  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
+                        o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
+                        o in comm['Objects']]
+
+    # convert dirts to a set to remove duplicates and convert back to a list
+    percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
+
+    for o in percepts['Objects']:
+        if o[1][0] > 19 or o[1][1] > 19:
+            print(percepts['GPS'], o)
+
+    return percepts
+
 class GreedyAgentWithRangePerception(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
 
@@ -155,9 +172,7 @@ class GreedyAgentWithRangePerception(XYAgent):
             if percepts['Dirty']:
                 return 'GrabObject'
             else:
-                # collect percept data
-                dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
-                agent_location = (0, 0)
+                agent_location = (0,0)
                 agent_heading = percepts['Compass']
                 # collect communication data
                 dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
@@ -173,15 +188,9 @@ class GreedyAgentWithRangePerception(XYAgent):
                 return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
         self.program = program
 
-        def state_estimator(percepts, comms):
-            for comm in comms.values():
-                percepts['Objects'] += [(o[0], (
-                o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
-                                        o in comm['Objects']]
-            return percepts
-        self.state_estimator = state_estimator
+        self.state_estimator = basic_state_estimator
 
-def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10, communicate=False):
+def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10, communication=False):
     "Randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
@@ -207,15 +216,10 @@ class GreedyAgentWithoutRangePerception(XYAgent):
             if percepts['Dirty']:
                 return 'GrabObject'
             else:
-                # collect percept data
-                dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
-                agent_location = (0, 0)
+                agent_location = (0,0)
                 agent_heading = percepts['Compass']
                 # collect communication data
                 dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
-
-                # convert dirts to a set to remove duplicates and convert back to a list
-                dirts = list(set(dirts))  # note: does not preserve order
 
                 if dirts:
                     self.dirts = dirts
@@ -225,21 +229,15 @@ class GreedyAgentWithoutRangePerception(XYAgent):
                 return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
         self.program = program
 
-        def state_estimator(percepts, comms):
-            for comm in comms.values():
-                percepts['Objects'] += [(o[0], (
-                o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
-                                        o in comm['Objects']]
-            return percepts
-        self.state_estimator = state_estimator
+        self.state_estimator = basic_state_estimator
 
-def NewGreedyAgentWithoutRangePerception(debug=False, communicate=True):
+def NewGreedyAgentWithoutRangePerception(debug=False, communication=True):
     "Randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
-        return DebugAgent(GreedyAgentWithoutRangePerception(communicate=communicate))
+        return DebugAgent(GreedyAgentWithoutRangePerception(communication=communication))
     else:
-        return GreedyAgentWithoutRangePerception(communicate=communicate)
+        return GreedyAgentWithoutRangePerception(communication=communication)
 
 class GreedyDrone(XYAgent):
     '''
@@ -247,7 +245,9 @@ class GreedyDrone(XYAgent):
     It doesn't have a RangePerceptor so it must commmunicate.
     '''
 
-    def __init__(self, sensor_range=10, communication=True):
+    blocker = False
+
+    def __init__(self, sensor_radius=10, communication=True):
         Agent.__init__(self)
         self.perceptor_types = [GPSPerceptor, CompassPerceptor, RangePerceptor]
         self.actuator_types.extend([]) # No additional actions, just turn and move
@@ -255,37 +255,38 @@ class GreedyDrone(XYAgent):
         self.comms = {}
         # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
         self.dirts = []
+        self.sensor_r = sensor_radius
         def program(percepts):
-            # collect percept data
-            dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
-            agent_location = (0, 0)
+            agent_location = (0,0)
             agent_heading = percepts['Compass']
             # collect communication data
             dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
 
             if dirts:
                 self.dirts = dirts
-                nearest_dirt = find_nearest(agent_location, dirts)
-                command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
+
+                close_dirts = [d for d in dirts if distance2(d,agent_location)<(sensor_radius*.75)**2]
+                if close_dirts: # if there are dirts close to you, move towards the center (of mass) of them
+                    x,y = zip(*close_dirts) # create two lists of just the x and y values for averaging
+                    target = (math.fsum(x)/len(x),math.fsum(y)/len(y))
+                else: # if there are no dirts close to you, move towards the closest dirt
+                    target = find_nearest(agent_location, dirts)
+
+                command = go_to(agent_location, agent_heading, target, bump=False)
                 return command
+            # if there are no dirts, make a random action
             return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
         self.program = program
 
-        def state_estimator(percepts, comms):
-            for comm in comms.values():
-                percepts['Objects'] += [(o[0], (
-                o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
-                                        o in comm['Objects']]
-            return percepts
-        self.state_estimator = state_estimator
+        self.state_estimator = basic_state_estimator
 
-def NewGreedyDrone(debug=False, sensor_radius=10, communicate=True):
+def NewGreedyDrone(debug=False, sensor_radius=10, communication=True):
     "Randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
-        return DebugAgent(GreedyDrone(sensor_radius=sensor_radius, communicate=communicate))
+        return DebugAgent(GreedyDrone(sensor_radius=sensor_radius, communication=communication))
     else:
-        return GreedyDrone(sensor_radius=sensor_radius, communicate=communicate)
+        return GreedyDrone(sensor_radius=sensor_radius, communication=communication)
 
 
 class GreedyAgent(XYAgent):

@@ -128,6 +128,8 @@ class EnvFrame(tk.Frame):
                         'GreedyAgentWithRangePerception':'robot-%s',
                         'GreedyAgent':'robot-%s',
                         'RandomReflexAgent':'robot-%s',
+                        'GreedyAgentWithoutRangePerception':'robot-%s',
+                        'GreedyDrone':'drone-%s',
                         'Dirt':'dirt',
                         'Wall':'wall',
                         'Fire':'fire'}
@@ -135,6 +137,10 @@ class EnvFrame(tk.Frame):
                        'robot-left':itk.PhotoImage(Image.open('img/robot-left.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'robot-up':itk.PhotoImage(Image.open('img/robot-up.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'robot-down':itk.PhotoImage(Image.open('img/robot-down.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'drone-right':itk.PhotoImage(Image.open('img/drone.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'drone-left':itk.PhotoImage(Image.open('img/drone.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'drone-up':itk.PhotoImage(Image.open('img/drone.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'drone-down':itk.PhotoImage(Image.open('img/drone.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'dirt':itk.PhotoImage(Image.open('img/dirt.png').resize((int(0.8*cellwidth),int(0.4*cellwidth)),resample=Image.LANCZOS)),
                        'wall':itk.PhotoImage(Image.open('img/wall.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'fire':itk.PhotoImage(Image.open('img/fire.png').resize((int(0.55*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS))}
@@ -175,8 +181,9 @@ class EnvFrame(tk.Frame):
         print('Cell (%s, %s) contains %s' %  (loc[0], loc[1], obj_string))
         for obj in objs:
             if isinstance(obj, Agent) and hasattr(obj, 'comms'):
-                print(obj.comms)
-                print(obj.dirts)
+                print('percepts = %s' % obj.percepts)
+                print('comms = %s' % obj.comms)
+                print('dirts = %s' % obj.dirts)
 
     def middle_click(self, event):
         pass
@@ -196,10 +203,11 @@ class EnvFrame(tk.Frame):
             print('Cell (%s, %s) contains %s' % (loc[0], loc[1], 'No Agents'))
 
     def object_to_image(self,obj):
-        if hasattr(obj, 'heading'):
-            return self.file2image[self.class2file.get(getattr(obj, '__name__', obj.__class__.__name__),'') % self.orientation[obj.heading]]
+        f = self.class2file.get(getattr(obj, '__name__', obj.__class__.__name__),'')
+        if hasattr(obj, 'heading') and f!='':
+            return self.file2image[f % self.orientation[obj.heading]]
         else:
-            return self.file2image[self.class2file.get(getattr(obj, '__name__', obj.__class__.__name__),'')]
+            return self.file2image[f]
 
     def display_object(self, obj):
         obj.icon = self.NewIcon(obj)
