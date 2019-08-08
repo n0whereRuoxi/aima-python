@@ -8,7 +8,7 @@ http://aima.cs.berkeley.edu/python/agents.py
 
 import inspect
 from utils import *
-import random, copy
+import random, copy, warnings
 from functools import partial
 import matplotlib.pyplot as plt
 
@@ -41,11 +41,6 @@ EnvFrame ## A graphical representation of the Environment
 '''
 
 
-
-
-
-
-
 class Environment:
     """
     Abstract class representing an Environment.  'Real' Environment classes inherit from this. Your Environment will
@@ -63,26 +58,30 @@ class Environment:
         self.agents = []
         self.perceptors = {}
         self.communicator = None
+        self.actuators = {}
 
     # Mark: What does this do?  It isn't checked in the Environment class's add_object.
     object_classes = [] ## List of classes that can go into environment
 
     def percept(self, agent):
         agentpercept = {}  # initialize the percept dictionary
-        for per in agent.perceptorTypes:  # for each perceptor in agent
+        for per in agent.perceptor_types:  # for each perceptor in agent
             # calculate the percept value for the perceptor and append to the percept dictionary
             agentpercept.update(self.perceptors[per.__name__].percept(agent))
         return agentpercept
+
+    def execute_action(self, agent, action, params=None):
+        if [act for act in agent.actuator_types if type(self.actuators[action]) is act]:  # if the requested action is in the list
+            self.actuators[action].actuate(agent, params)  # call the requested action from the actuators dictionary
+        else:
+            # if the agent is trying to do something it can't, raise a warning
+            warnings.warn('%s requested action %s and it is not supported.' % (agent, action))
 
     def communicate(self, from_agent):
         if self.communicator:
             agents_seen = self.communicator.get_comms_network(from_agent)
             for to_agent in agents_seen:
                 self.communicator.communicate(from_agent.percepts, from_agent, to_agent)
-
-    def execute_action(self, agent, action):
-        "Change the world to reflect this action. Override this."
-        raise NotImplementedError
 
     def default_location(self, obj):
         "Default location to place a new object with unspecified location"
@@ -147,12 +146,13 @@ class Environment:
         if isinstance(obj, Agent):
             obj.performance = 0
             self.add_perceptor_for_agent(obj)
+            self.add_actuator_for_agent(obj)
             self.add_communicator_for_agent(obj)
             self.agents.append(obj)
         return obj
 
     def add_perceptor_for_agent(self, agent):
-        for pertype in agent.perceptorTypes: # for each type of perceptor for the agent
+        for pertype in agent.perceptor_types: # for each type of perceptor for the agent
             if not [p for p in self.perceptors.values() if type(p) is pertype]: # if the perceptor doesn't exist yet
                 self.perceptors[pertype.__name__] = pertype(self) # add the name:perceptor pair to the dictionary
 
@@ -166,6 +166,12 @@ class Environment:
                     pass
             else: # if it doesn't exist, create a new communicator based on the agent's communicator definition
                 self.communicator = agent.communicator(self) # set the communicator equal to the agent communicator
+
+    def add_actuator_for_agent(self, agent):
+        for acttype in agent.actuator_types: # for each type of perceptor for the agent
+            if not [act for act in self.actuators.values() if type(act) is acttype]: # if the perceptor doesn't exist yet
+                print('creating actuator - %s' % acttype.__name__)
+                self.actuators[acttype.__name__] = acttype(self) # add the name:perceptor pair to the dictionary
 
 
 class XYEnvironment(Environment):
@@ -199,48 +205,6 @@ class XYEnvironment(Environment):
         "Return all objects within radius of location."
         radius2 = radius * radius # square radius instead of taking the square root for faster processing
         return [obj for obj in self.objects if isinstance(obj.location, tuple) and distance2(location, obj.location) <= radius2]
-
-#    def percept(self, agent): # Unused, currently at default settings
-#        "By default, agent perceives objects within radius r."
-#        return [self.object_percept(obj, agent)
-#                for obj in self.objects_near(agent, 3)]
-
-    def execute_action(self, agent, action):
-        # TODO: Add stochasticity
-        # TODO: Add actions on objects e.g. Grab(Target)
-
-        # The world processes actions on behalf of an agent.
-        # Agents decide what to do, but the Environment class actually processes the behavior.
-        #
-        # Implemented actions are 'TurnRignt', 'TurnLeft', 'Forward', 'Grab', 'Release'
-        if action == 'TurnRight':
-            # decrement the heading by -90° by getting the previous index of the headings array
-            agent.heading = self.turn_heading(agent.heading, -1)
-        elif action == 'TurnLeft':
-            # increment the heading by +90° by getting the next index of the headings array
-            agent.heading = self.turn_heading(agent.heading, +1)
-        elif action == 'Forward':
-            # move the Agent in the facing direction by adding the heading vector to the Agent location
-            self.move_to(agent, vector_add(agent.heading, agent.location))
-        elif action == 'Grab':
-            # check to see if any objects at the Agent's location are grabbable by the Agent
-            objs = [obj for obj in self.objects_at(agent.location)
-                if (obj != agent and obj.is_grabbable(agent))]
-            # if so, pick up all grabbable objects and add them to the holding array
-            if objs:
-                agent.holding += objs
-                for o in objs:
-                    # set the location of the Object = the Agent instance carrying the Object
-                    # by setting the location to an object instead of a tuple, we can now detect
-                    # when to remove if from the display.  This may be useful in other ways, if
-                    # the object needs to know who it's holder is
-                    o.location = agent
-                    if isinstance(o,Dirt): agent.performance += 100
-        elif action == 'Release':
-            # drop an objects being held by the Agent.
-            if agent.holding:
-                # restore the location parameter to add the object back to the display
-                agent.holding.pop().location = agent.location
 
     def default_location(self, obj):
         # If no location is specified, set the location to be a random location in the Environment.
@@ -276,10 +240,6 @@ class XYEnvironment(Environment):
             self.add_object(Wall(), (0, y+1))
             self.add_object(Wall(), (self.width-1, y))
 
-    def turn_heading(self, heading, inc,
-                 headings=[(1, 0), (0, 1), (-1, 0), (0, -1)]):
-        "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
-        return headings[(headings.index(heading) + inc) % len(headings)]
 
 #______________________________________________________________________________
 ## Vacuum environment
@@ -294,19 +254,6 @@ class VacuumEnvironment(XYEnvironment):
         self.add_walls()
 
     object_classes = []
-
-#    def percept(self, agent):
-#        status =  if_(self.find_at(Dirt, agent.location), 'Dirty', 'Clean')
-#        bump = if_(agent.bump, 'Bump', 'None')
-#        dirts = [obj.location for obj in self.objects_of_type(Dirt) if not isinstance(obj.location, Agent)]
-#        return (status, bump, dirts, agent.location, agent.heading)
-
-    def execute_action(self, agent, action):
-        if action == 'Suck':
-            if self.find_at(Dirt, agent.location):
-                agent.performance += 100
-        agent.performance -= 1
-        XYEnvironment.execute_action(self, agent, action)
 
     def exogenous_change(self):
         pass
@@ -568,12 +515,22 @@ def test6():
     ef.mainloop()
 
 
+def test_all():
+    # TODO: Fix issue with not recreating tkinter windows properly
+    test0()
+    test1()
+    test2()
+    test3()
+    test4()
+    test5()
+    test6()
+
 def main():
     # set a seed to provide repeatable outcomes each run
     random.seed(None) # set seed to None to remove the seed and have different outcomes
 
-    #test4()
     test4()
+    #test_all()  # not fully working just yet
 
 if __name__ == "__main__":
     # execute only if run as a script

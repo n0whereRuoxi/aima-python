@@ -7,6 +7,7 @@ import random, copy, collections
 from objects import Object
 from perception import *
 from comms import *
+from actuator import *
 import numpy as np
 from scipy import spatial
 import uuid
@@ -62,6 +63,7 @@ def DebugAgent(agent):
 class XYAgent(Agent):
     holding = []
     heading = (1, 0)
+    actuator_types = [MoveForward, TurnLeft, TurnRight]
 
 class RandomXYAgent(XYAgent):
     "An agent that chooses an action at random, ignoring all percepts."
@@ -74,17 +76,18 @@ def NewRandomXYAgent(debug=False):
     "Randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
-        return DebugAgent(RandomXYAgent(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward']))
+        return DebugAgent(RandomXYAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward']))
     else:
-        return RandomXYAgent(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward'])
-    #return RandomXYAgent(['TurnRight', 'TurnLeft', 'Forward', 'Grab', 'Release'])
+        return RandomXYAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
+    #return RandomXYAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'GrabObject', 'ReleaseObject'])
 
 class RandomReflexAgent(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
     def __init__(self, actions):
         Agent.__init__(self)
         self.actions = actions
-        self.perceptorTypes = [DirtyPerceptor, BumpPerceptor]
+        self.perceptor_types = [DirtyPerceptor, BumpPerceptor]
+        self.actuator_types.extend([GrabObject, ReleaseObject])
         def program(percept):
             if percept['Dirty']:
                 return "Grab"
@@ -103,7 +106,7 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
     if agent_heading[0] == 0:
         '''up or down'''
         if (nearest_dirt[1] - agent_location[1]) * agent_heading[1] > 0 and not bump:
-            return 'Forward'
+            return 'MoveForward'
         else:
             if nearest_dirt[0] - agent_location[0] > 0:
                 '''dirt to right'''
@@ -119,7 +122,7 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
     else:
         '''left or right'''
         if (nearest_dirt[0] - agent_location[0]) * agent_heading[0] > 0 and not bump:
-            return 'Forward'
+            return 'MoveForward'
         else:
             if nearest_dirt[1] - agent_location[1] > 0:
                 '''dirt to down'''
@@ -138,7 +141,8 @@ class GreedyAgentWithRangePerception(XYAgent):
 
     def __init__(self, sensor_radius=10, communication=False):
         Agent.__init__(self)
-        self.perceptorTypes = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
+        self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
+        self.actuator_types.extend([GrabObject, ReleaseObject])
         self.communicator = Communicator if communication else None
         self.sensor_r = sensor_radius
         self.comms = {}
@@ -149,7 +153,7 @@ class GreedyAgentWithRangePerception(XYAgent):
         self.dirts = []
         def program(percepts):
             if percepts['Dirty']:
-                return 'Grab'
+                return 'GrabObject'
             else:
                 # collect percept data
                 dirts = [o[1] for o in percepts['Objects'] if o[0]=='Dirt']
@@ -163,7 +167,7 @@ class GreedyAgentWithRangePerception(XYAgent):
                     nearest_dirt = find_nearest(agent_location, dirts)
                     command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                     return command
-                return random.choice(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward'])
+                return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
         self.program = program
 
         def state_estimator(percepts, comms):
@@ -191,7 +195,8 @@ class GreedyAgent(XYAgent):
         # def turn_heading(heading, inc, headings=[(1, 0), (0, 1), (-1, 0), (0, -1)]):
         #     "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
         #     return headings[(headings.index(heading) + inc) % len(headings)]
-        self.perceptorTypes = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
+        self.perceptor_types = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
+        self.actuator_types.extend([GrabObject, ReleaseObject])
         def program(percepts):
             if percepts['Dirty']:
                 return "Grab"
@@ -211,9 +216,9 @@ def NewRandomReflexAgent(debug=False):
     "If the cell is dirty, Grab the dirt; otherwise, randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
-        return DebugAgent(RandomReflexAgent(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward']))
+        return DebugAgent(RandomReflexAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward']))
     else:
-        return RandomReflexAgent(['TurnRight', 'TurnLeft', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward', 'Forward'])
+        return RandomReflexAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
 
 class SimpleReflexAgent(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
