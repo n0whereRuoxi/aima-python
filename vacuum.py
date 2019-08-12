@@ -81,8 +81,10 @@ class Environment:
             agentpercept.update(self.perceptors[per.__name__].percept(agent))
         return agentpercept
 
-    def execute_action(self, agent, action, params=None):
-        if [act for act in agent.actuator_types if type(self.actuators[action]) is act]:  # if the requested action is in the list
+    def execute_action(self, agent, action, params={}):
+        if [act.type for act in agent.actuator_types if type(self.actuators[action]) is act.type]:  # if the requested action is in the list
+            for ps in [c.params for c in agent.actuator_types if c.type.__name__ == action]:
+                params.update(ps)
             self.actuators[action].actuate(agent, params)  # call the requested action from the actuators dictionary
         else:
             # if the agent is trying to do something it can't, raise a warning
@@ -180,8 +182,8 @@ class Environment:
 
     def add_actuator_for_agent(self, agent):
         for acttype in agent.actuator_types: # for each type of perceptor for the agent
-            if not [act for act in self.actuators.values() if type(act) is acttype]: # if the perceptor doesn't exist yet
-                self.actuators[acttype.__name__] = acttype(self) # add the name:perceptor pair to the dictionary
+            if not [act for act in self.actuators.values() if type(act) is acttype.type]: # if the perceptor doesn't exist yet
+                self.actuators[acttype.type.__name__] = acttype.type(self) # add the name:perceptor pair to the dictionary
 
 
 class XYEnvironment(Environment):
@@ -431,13 +433,13 @@ def test_agent(AgentFactory, steps, envs):
 
 def test0(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
-    # Create agents on left wall
+    # Create agents
 
     e.add_object(GreedyAgentWithRangePerception(sensor_radius=3))
 
@@ -448,13 +450,13 @@ def test0(seed=None):
 
 def test1(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
-    # Create agents on left wall
+    # Create agents
     for i in range(1,19):
         e.add_object(NewRandomReflexAgent(debug=False),location=(1,i)).id = i
 
@@ -465,7 +467,7 @@ def test1(seed=None):
 
 def test2(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     sensor_radii = range(10)
@@ -479,13 +481,13 @@ def test2(seed=None):
 
 def test3(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
-    # Create agents on left wall
+    # Create agents
     for i in range(1,19):
         e.add_object(GreedyAgentWithRangePerception(sensor_radius = 6), location=(1,i)).id = i
 
@@ -495,7 +497,7 @@ def test3(seed=None):
 
 def test4(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
@@ -512,7 +514,7 @@ def test4(seed=None):
 
 def test5(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     envs = [EnvFactory() for i in range(30)]
@@ -540,13 +542,13 @@ def test5(seed=None):
 
 def test6(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=6,height=9,config="shape of eight")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
-    # Create agents on left wall
+    # Create agents
     e.add_object(NewGreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
 
     ef.configure_display()
@@ -555,13 +557,13 @@ def test6(seed=None):
 
 def test7(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
 
-    # Create agents on left wall
+    # Create agents
     for x in range(2):
         for y in range(2):
             e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
@@ -576,7 +578,7 @@ def test7(seed=None):
 
 def test8(seed=None):
     # set a seed to provide repeatable outcomes each run
-    random.seed(seed) # set seed to None to remove the seed and have different outcomes
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
     envs = [EnvFactory() for i in range(10)]
@@ -607,6 +609,57 @@ def test8(seed=None):
     plt.ylabel('time to fully clean')
     plt.show()
 
+def test9(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+
+    # Create agents
+    for i in range(10):
+        o = NewGreedyAgentWithRangePerception(sensor_radius=6, communication=True)
+        o.actuator_types[3].params['probability'] = 1 if o.actuator_types[3].type is GrabObject else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
+        e.add_object(o, location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
+
+def test10(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    EnvFactory = partial(NewVacuumEnvironment,width=20,height=20,config="random dirt")
+    envs = [EnvFactory() for i in range(10)]
+    "Return the mean score of running an agent in each of the envs, for steps"
+    results = []
+    agent_range = range(1,11,1)
+    for num_agents in agent_range:
+        total = 0
+        steps = 2000
+        i = 0
+        for env in copy.deepcopy(envs):
+            i+=1
+            with Timer(name='Simulation Timer - # of Agents=%s - p=%.3f - Environment=%s' % (num_agents, 1/num_agents, i), format='%.4f'):
+                for n in range(num_agents):
+                    o = NewGreedyAgentWithRangePerception(sensor_radius=6, communication=True)
+                    o.actuator_types[3].params['probability'] = 1/num_agents if o.actuator_types[3].type is GrabObject \
+                        else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
+                    env.add_object(o, location=(random.randrange(1, 18), random.randrange(1, 18))).id = n + 1
+
+                env.run(steps)
+                total += env.t
+        results.append(float(total)/len(envs))
+    plt.plot(agent_range,[r for r in results],'r-')
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
+    plt.xlabel('number of agents')
+    plt.ylabel('time to fully clean')
+    plt.show()
+
+
 def test_all(seed=None):
     test0(seed)
     test1(seed)
@@ -617,9 +670,11 @@ def test_all(seed=None):
     test6(seed)
     test7(seed)
     test8(seed)
+    test9(seed)
+    test10(seed)
 
 def main():
-    test8()
+    test10()
     #test_all()  # not fully working just yet
 
 if __name__ == "__main__":

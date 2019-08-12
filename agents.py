@@ -64,7 +64,7 @@ def DebugAgent(agent):
 class XYAgent(Agent):
     holding = []
     heading = (1, 0)
-    actuator_types = [MoveForward, TurnLeft, TurnRight]
+    actuator_types = [Component(type=MoveForward), Component(type=TurnLeft), Component(type=TurnRight)]
 
 class RandomXYAgent(XYAgent):
     "An agent that chooses an action at random, ignoring all percepts."
@@ -88,7 +88,7 @@ class RandomReflexAgent(XYAgent):
         Agent.__init__(self)
         self.actions = actions
         self.perceptor_types = [DirtyPerceptor, BumpPerceptor]
-        self.actuator_types.extend([GrabObject, ReleaseObject])
+        self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
         def program(percept):
             if percept['Dirty']:
                 return "GrabObject"
@@ -159,7 +159,7 @@ class GreedyAgentWithRangePerception(XYAgent):
     def __init__(self, sensor_radius=10, communication=False):
         Agent.__init__(self)
         self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
-        self.actuator_types.extend([GrabObject, ReleaseObject])
+        self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
         self.communicator = Communicator if communication else None
         self.sensor_r = sensor_radius
         self.comms = {}
@@ -207,7 +207,7 @@ class GreedyAgentWithoutRangePerception(XYAgent):
     def __init__(self, communication=True):
         Agent.__init__(self)
         self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor]
-        self.actuator_types.extend([GrabObject, ReleaseObject])
+        self.actuator_types.extend([Component(type=GrabObject,params={'probability':1}), Component(type=ReleaseObject)])
         self.communicator = Communicator if communication else None
         self.comms = {}
         # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
@@ -316,7 +316,7 @@ class GreedyAgent(XYAgent):
         #     "Return the heading to the left (inc=+1) or right (inc=-1) in headings."
         #     return headings[(headings.index(heading) + inc) % len(headings)]
         self.perceptor_types = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
-        self.actuator_types.extend([GrabObject, ReleaseObject])
+        self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
         def program(percepts):
             if percepts['Dirty']:
                 return "Grab"
