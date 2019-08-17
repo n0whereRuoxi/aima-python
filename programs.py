@@ -49,7 +49,7 @@ def greedy_roomba_generator():
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
             dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
-            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'GreedyAgentWithoutRangePerception'}
+            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'GreedyAgentWithRangePerception'}
             unoccupied_dirts = list(dirts.difference(vacuums))
 
             if unoccupied_dirts:

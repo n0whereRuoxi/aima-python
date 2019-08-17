@@ -40,13 +40,16 @@ EnvFrame ## A graphical representation of the Environment
 
 '''
 
+# TODO: Fix the issue with the seed not functioning as expected for multi-run tests (e.g. test9())
+
 # create a wrapper to initialize the seed
 old_seed = random.seed  # store the old seed function in old_seed
 
 def new_seed(a=None): # create a new_seed function to add new behavior before old_seed
-    if a is None:                   # if the seed is random
+    if a == None:                   # if the seed is random
+        print('seed is None, generating random seed')
         a = random.getrandbits(20)  # then create a random 20 bit number (1 in 1,000,000)
-    random.current_seed = a         # store the seed value in random.current_seed
+    random.current_seed = a         # store the seed value in random.current_seed if hasattr(random,'current_seed') else '??' if hasattr(random,'current_seed') else '??'
     old_seed(a)                     # run the old_seed function with the seed value (a)
 
 random.seed = new_seed  # replace the random.seed function with our new_seed function
@@ -81,7 +84,8 @@ class Environment:
             agentpercept.update(self.perceptors[per.__name__].percept(agent))
         return agentpercept
 
-    def execute_action(self, agent, action, params={}):
+    def execute_action(self, agent, action, params=None):
+        if not params: params = {}
         if [act.type for act in agent.actuator_types if type(self.actuators[action]) is act.type]:  # if the requested action is in the list
             for ps in [c.params for c in agent.actuator_types if c.type.__name__ == action]:
                 params.update(ps)
@@ -437,7 +441,7 @@ def test0(seed=None):
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
 
@@ -454,7 +458,7 @@ def test1(seed=None):
 
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
     for i in range(1,19):
@@ -474,7 +478,7 @@ def test2(seed=None):
     results = compare_agents(EnvFactory, [partial(NewGreedyAgentWithRangePerception, debug=False, sensor_radius=r) for r in sensor_radii], n=10, steps=2000)
     print(results)
     plt.plot(sensor_radii,[r[1] for r in results],'r-')
-    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
     plt.xlabel('sensor radius')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -485,7 +489,7 @@ def test3(seed=None):
 
     e = NewVacuumEnvironment(width=20,height=20,config="center walls w/ random dirt and fire")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
     for i in range(1,19):
@@ -501,7 +505,7 @@ def test4(seed=None):
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents on the four corners
     for x in range(2):
@@ -535,7 +539,7 @@ def test5(seed=None):
                 total += env.t
         results.append(float(total)/len(envs))
     plt.bar(['True', 'False'],[r for r in results],align='center')
-    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
     plt.xlabel('communication')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -546,7 +550,7 @@ def test6(seed=None):
 
     e = NewVacuumEnvironment(width=6,height=9,config="shape of eight")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
     e.add_object(NewGreedyAgentWithRangePerception(sensor_radius = 3, communication = True), location=(1,1)).id = 1
@@ -561,7 +565,7 @@ def test7(seed=None):
 
     e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
     for x in range(2):
@@ -604,7 +608,7 @@ def test8(seed=None):
                 total += env.t
         results.append(float(total)/len(envs))
     plt.plot(drone_range,[r for r in results],'r-')
-    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
     plt.xlabel('number of drones')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -615,7 +619,7 @@ def test9(seed=None):
 
     e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
     for i in range(10):
@@ -654,7 +658,7 @@ def test10(seed=None):
                 total += env.t
         results.append(float(total)/len(envs))
     plt.plot(agent_range,[r for r in results],'r-')
-    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed))
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
     plt.xlabel('number of agents')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -674,7 +678,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test10()
+    test10(464115)
     #test_all()
 
 if __name__ == "__main__":

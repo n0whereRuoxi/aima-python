@@ -56,6 +56,10 @@ class Fire(Wall):
         self.t = 5
 
 class Component():
-    def __init__(self, type, params = {}):
+    def __init__(self, type, params = None):
         self.type = type
-        self.params = params
+        if params:
+            self.params = params
+        else:
+            self.params = {}
+

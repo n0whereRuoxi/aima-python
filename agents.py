@@ -62,9 +62,11 @@ def DebugAgent(agent):
 #______________________________________________________________________________
 
 class XYAgent(Agent):
-    holding = []
-    heading = (1, 0)
-    actuator_types = [Component(type=MoveForward), Component(type=TurnLeft), Component(type=TurnRight)]
+    def __init__(self):
+        Agent.__init__(self)
+        self.holding = []
+        self.heading = (1, 0)
+        self.actuator_types = [Component(type=MoveForward), Component(type=TurnLeft), Component(type=TurnRight)]
 
 class RandomXYAgent(XYAgent):
     "An agent that chooses an action at random, ignoring all percepts."
@@ -96,7 +98,7 @@ class GreedyAgentWithRangePerception(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
 
     def __init__(self, sensor_radius=10, communication=False):
-        Agent.__init__(self)
+        XYAgent.__init__(self)
         self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
         self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
         self.communicator = Communicator if communication else None
@@ -105,6 +107,7 @@ class GreedyAgentWithRangePerception(XYAgent):
 
         self.program = programs.greedy_roomba_generator()
         self.state_estimator = programs.basic_state_estimator_generator()
+
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10, communication=False):
     "Randomly choose one of the actions from the vaccum environment."
@@ -121,7 +124,7 @@ class GreedyAgentWithoutRangePerception(XYAgent):
     '''
 
     def __init__(self, communication=True):
-        Agent.__init__(self)
+        XYAgent.__init__(self)
         self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor]
         self.actuator_types.extend([Component(type=GrabObject,params={'probability':1}), Component(type=ReleaseObject)])
         self.communicator = Communicator if communication else None
@@ -147,7 +150,7 @@ class GreedyDrone(XYAgent):
     blocker = False
 
     def __init__(self, sensor_radius=10, communication=True):
-        Agent.__init__(self)
+        XYAgent.__init__(self)
         self.perceptor_types = [GPSPerceptor, CompassPerceptor, RangePerceptor]
         self.actuator_types.extend([]) # No additional actions, just turn and move
         self.communicator = Communicator if communication else None
