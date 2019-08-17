@@ -11,7 +11,6 @@ from actuator import *
 import programs
 
 import random, copy, collections, math
-from utils import distance2, unit_vector, vector_add, scalar_vector_product, vector_average
 import uuid
 # ______________________________________________________________________________
 
@@ -90,7 +89,7 @@ class RandomReflexAgent(XYAgent):
         self.actions = actions
         self.perceptor_types = [DirtyPerceptor, BumpPerceptor]
         self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
-        self.program = programs.random_reflex
+        self.program = programs.random_reflex_generator(actions)
 
 
 class GreedyAgentWithRangePerception(XYAgent):
@@ -103,10 +102,9 @@ class GreedyAgentWithRangePerception(XYAgent):
         self.communicator = Communicator if communication else None
         self.sensor_r = sensor_radius
         self.comms = {}
-        self.dirts = []
 
-        self.program = programs.greedy_roomba
-        self.state_estimator = programs.basic_state_estimator
+        self.program = programs.greedy_roomba_generator()
+        self.state_estimator = programs.basic_state_estimator_generator()
 
 def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10, communication=False):
     "Randomly choose one of the actions from the vaccum environment."
@@ -128,11 +126,9 @@ class GreedyAgentWithoutRangePerception(XYAgent):
         self.actuator_types.extend([Component(type=GrabObject,params={'probability':1}), Component(type=ReleaseObject)])
         self.communicator = Communicator if communication else None
         self.comms = {}
-        # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
-        self.dirts = []
-        self.program = programs.greedy_roomba
+        self.program = programs.greedy_roomba_generator()
 
-        self.state_estimator = programs.basic_state_estimator
+        self.state_estimator = programs.basic_state_estimator_generator()
 
 def NewGreedyAgentWithoutRangePerception(debug=False, communication=True):
     "Randomly choose one of the actions from the vaccum environment."
@@ -156,12 +152,10 @@ class GreedyDrone(XYAgent):
         self.actuator_types.extend([]) # No additional actions, just turn and move
         self.communicator = Communicator if communication else None
         self.comms = {}
-        # orientation = {(1,0): 'right', (-1,0): 'left', (0,-1): 'up', (0,1): 'down'}
-        self.dirts = []
         self.sensor_r = sensor_radius
 
-        self.program = programs.greedy_drone
-        self.state_estimator = programs.basic_state_estimator
+        self.program = programs.greedy_drone_generator(sensor_radius)
+        self.state_estimator = programs.basic_state_estimator_generator()
 
 def NewGreedyDrone(debug=False, sensor_radius=10, communication=True):
     "Randomly choose one of the actions from the vaccum environment."
@@ -182,7 +176,7 @@ class GreedyAgent(XYAgent):
         #     return headings[(headings.index(heading) + inc) % len(headings)]
         self.perceptor_types = [DirtyPerceptor, BumpPerceptor, GPSPerceptor, CompassPerceptor, PerfectPerceptor]
         self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
-        self.program = programs.greedy_roomba
+        self.program = programs.greedy_roomba_generator()
 
 
 def NewRandomReflexAgent(debug=False):
@@ -198,7 +192,7 @@ class SimpleReflexAgent(XYAgent):
 
     def __init__(self, rules, interpret_input):
         Agent.__init__(self)
-        self.program = programs.rule_program
+        self.program = programs.rule_program_generator()
 
 class ReflexAgentWithState(XYAgent):
     '''This agent takes action based on the percept and state. [Fig. 2.16]'''
@@ -206,6 +200,6 @@ class ReflexAgentWithState(XYAgent):
     def __init__(self, rules, udpate_state):
         Agent.__init__(self)
         state, action = None, None
-        self.program = programs.rule_program
+        self.program = programs.rule_program_generator()
 
 #______________________________________________________________________________

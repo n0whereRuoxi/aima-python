@@ -674,8 +674,8 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test9()
-    #test_all()  # not fully working just yet
+    test10()
+    #test_all()
 
 if __name__ == "__main__":
     # execute only if run as a script
