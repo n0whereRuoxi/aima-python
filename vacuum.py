@@ -122,7 +122,7 @@ class Environment:
             for a in self.agents:
                 a.percepts = self.percept(a)
 
-            for from_agent in self.agents:
+            for from_agent in self.agents:  # TODO: how to add communication as an action?
                 self.communicate(from_agent)
 
             for a in self.agents:
@@ -620,7 +620,7 @@ def test9(seed=None):
     # Create agents
     for i in range(10):
         o = NewGreedyAgentWithRangePerception(sensor_radius=6, communication=True)
-        o.actuator_types[3].params['probability'] = 1 if o.actuator_types[3].type is GrabObject else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
+        o.actuator_types[3].params['probability'] = .1 if o.actuator_types[3].type is GrabObject else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
         e.add_object(o, location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
 
     ef.configure_display()
@@ -674,7 +674,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test10()
+    test9()
     #test_all()  # not fully working just yet
 
 if __name__ == "__main__":
