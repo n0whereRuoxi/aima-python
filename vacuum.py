@@ -678,7 +678,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test10(464115)
+    test7(464115)
     #test_all()
 
 if __name__ == "__main__":

@@ -129,7 +129,9 @@ class EnvFrame(tk.Frame):
                         'RandomReflexAgent':'robot-%s',
                         'GreedyAgentWithoutRangePerception':'robot-%s',
                         'GreedyDrone':'drone-%s',
+                        'Truck':'truck-%s',
                         'Dirt':'dirt',
+                        'Recycle':'recycle',
                         'Wall':'wall',
                         'Fire':'fire'}
         self.file2image = {'':None, 'robot-right':itk.PhotoImage(Image.open('img/robot-right.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
@@ -140,7 +142,12 @@ class EnvFrame(tk.Frame):
                        'drone-left':itk.PhotoImage(Image.open('img/drone-left.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-up':itk.PhotoImage(Image.open('img/drone-up.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-down':itk.PhotoImage(Image.open('img/drone-down.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-right':itk.PhotoImage(Image.open('img/truck-right.png').resize((int(0.8*cellwidth),int(0.33*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-left':itk.PhotoImage(Image.open('img/truck-left.png').resize((int(0.8*cellwidth),int(0.33*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-up':itk.PhotoImage(Image.open('img/truck-up.png').resize((int(0.33*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-down':itk.PhotoImage(Image.open('img/truck-down.png').resize((int(0.33*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'dirt':itk.PhotoImage(Image.open('img/dirt.png').resize((int(0.8*cellwidth),int(0.4*cellwidth)),resample=Image.LANCZOS)),
+                       'recycle':itk.PhotoImage(Image.open('img/recycle.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'wall':itk.PhotoImage(Image.open('img/wall.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'fire':itk.PhotoImage(Image.open('img/fire.png').resize((int(0.55*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS))}
         # note up and down are switched, since (0,0) is in the upper left
