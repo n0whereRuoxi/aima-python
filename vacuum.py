@@ -11,6 +11,9 @@ from utils import *
 import random, copy, warnings
 from functools import partial
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from tqdm import tqdm
+import pickle
 
 # import my files
 from agents import *
@@ -42,18 +45,12 @@ EnvFrame ## A graphical representation of the Environment
 
 # TODO: Fix the issue with the seed not functioning as expected for multi-run tests (e.g. test9())
 
-# create a wrapper to initialize the seed
-old_seed = random.seed  # store the old seed function in old_seed
-
 def new_seed(a=None): # create a new_seed function to add new behavior before old_seed
     if a == None:                   # if the seed is random
         print('seed is None, generating random seed')
         a = random.getrandbits(20)  # then create a random 20 bit number (1 in 1,000,000)
     random.current_seed = a         # store the seed value in random.current_seed if hasattr(random,'current_seed') else '??' if hasattr(random,'current_seed') else '??'
     old_seed(a)                     # run the old_seed function with the seed value (a)
-
-random.seed = new_seed  # replace the random.seed function with our new_seed function
-random.seed(None)       # generate a random seed to use have a known seed as the current value
 
 class Environment:
     """
@@ -437,18 +434,19 @@ def test_agent(AgentFactory, steps, envs):
 
 def test0(seed=None):
     # set a seed to provide repeatable outcomes each run
+    print(f"seed set to {seed}")
     random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3], seed))
 
     # Create agents
 
     e.add_object(GreedyAgentWithRangePerception(sensor_radius=3))
 
     ef.configure_display()
-    ef.run()
+    # ef.run()
     ef.mainloop()
 
 
@@ -600,6 +598,7 @@ def test8(seed=None):
                     for y in range(2):
                         env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                                 location=(1 + x * (env.width - 3), 1 + y * (env.height - 3))).id = x * 2 + y + 1
+
                 for n in range(num_drones):
                     env.add_object(NewGreedyDrone(sensor_radius=10, communication=True),
                                  location=(random.randrange(1, 18), random.randrange(1, 18))).id = n + 1
@@ -663,6 +662,74 @@ def test10(seed=None):
     plt.ylabel('time to fully clean')
     plt.show()
 
+def test11(seed=None):
+    """
+    Vary the team makeup (heterogeneity) and communication radius on the drones
+    to generate a plot of average completion time vs social entropy vs sensor radius
+    """
+    # set a seed to provide repeatable outcomes each run
+    random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    team_size = 30
+    runs_to_average = 20
+    sensor_radius_min = 5
+    sensor_radius_max = 15
+    environment_width = 200
+    environment_height = 200
+
+    EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
+    envs = [EnvFactory() for i in range(runs_to_average)]
+
+    # Result lists for plotting
+    s = [] # sensor radii
+    e = [] # simple social entropy
+    c = [] # average completion time
+
+    for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
+        for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
+            total = 0
+            max_steps = 2000
+            i = 0
+            num_roomba = team_size - num_drones
+            proportion_roomba = num_roomba / team_size
+            proportion_drone = num_drones / team_size
+            simple_social_entropy = -proportion_roomba * (0 if proportion_roomba == 0 else math.log(proportion_roomba,2)) \
+                                    -proportion_drone * (0 if proportion_drone == 0 else math.log(proportion_drone,2))
+            for env in copy.deepcopy(envs):
+                i+=1
+                for n in range(num_roomba):
+                    env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                                location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
+
+                for n in range(num_drones):
+                    env.add_object(NewGreedyDrone(sensor_radius=sensor_radius, communication=True),
+                                 location=(random.randrange(1, environment_width-2), random.randrange(1, environment_width-2))).id = n + 1
+
+                env.run(max_steps)
+                total += env.t
+
+            average_completion_time = float(total)/len(envs)
+            s.append(sensor_radius)
+            e.append(simple_social_entropy)
+            c.append(average_completion_time)
+
+        # After iterating over all teams, save current data
+        test11_data = {"s": s, "e": e, "c": c}
+        pickle.dump(test11_data, open(f"test11_iter{sensor_radius}.p", "wb"))
+
+    print(f"s={s}")
+    print(f"e={e}")
+    print(f"c={c}")
+    # 3D Scatterplot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(s, e, c, marker='o')
+    ax.set_title('%s x %s Environment of %s(), seed=%s, team size=%s, agent types=2, averaged over %s runs each' \
+              % (environment_width, environment_height, inspect.stack()[0][3], seed, team_size, runs_to_average))
+    ax.set_xlabel('Sensor Radius')
+    ax.set_ylabel('Simple Social Entropy')
+    ax.set_zlabel('Average Completion Time')
+    plt.show()
 
 def test_all(seed=None):
     test0(seed)
@@ -678,7 +745,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test10(464115)
+    test11(1)
     #test_all()
 
 if __name__ == "__main__":
