@@ -124,7 +124,9 @@ def basic_state_estimator_generator():
 
         for o in percepts['Objects']:
             if o[1][0] > 19 or o[1][1] > 19:
-                print(percepts['GPS'], o)
+                pass
+                # TODO: add a verbose flag so that print stmts don't spam terminal
+                # print(percepts['GPS'], o)
 
         return percepts
     return se_basic_state_estimator
