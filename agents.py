@@ -190,12 +190,14 @@ def NewRandomReflexAgent(debug=False):
     else:
         return RandomReflexAgent(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
 
+
 class SimpleReflexAgent(XYAgent):
     '''This agent takes action based solely on the percept. [Fig. 2.13]'''
 
     def __init__(self, rules, interpret_input):
         Agent.__init__(self)
         self.program = programs.rule_program_generator()
+
 
 class ReflexAgentWithState(XYAgent):
     '''This agent takes action based on the percept and state. [Fig. 2.16]'''
@@ -204,5 +206,32 @@ class ReflexAgentWithState(XYAgent):
         Agent.__init__(self)
         state, action = None, None
         self.program = programs.rule_program_generator()
+
+
+class KMeansAgentWithNetworkComms(XYAgent):
+    '''This agent takes action based solely on the percept. [Fig. 2.13]'''
+
+    def __init__(self, sensor_radius=10, comms_range=5):
+        XYAgent.__init__(self)
+        self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor]
+        self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
+        #self.communicator = BroadcastCommunicator if comms_range>=1 else None
+        self.communicator = NetworkCommunicator if comms_range>=1 else None
+        self.sensor_r = sensor_radius
+        self.comms_r = comms_range
+        self.comms = {}
+
+        self.program = programs.kmeans_roomba_generator()
+        self.state_estimator = programs.basic_state_estimator_generator()
+
+
+def NewKMeansAgentWithNetworkComms(debug=False, sensor_radius=10, comms_range=5):
+    "Randomly choose one of the actions from the vaccum environment."
+    # the extra forwards are just to alter the probabilities
+    if debug:
+        return DebugAgent(KMeansAgentWithNetworkComms(sensor_radius=sensor_radius))
+    else:
+        return KMeansAgentWithNetworkComms(sensor_radius=sensor_radius, comms_range=comms_range)
+
 
 #______________________________________________________________________________

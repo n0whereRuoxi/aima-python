@@ -39,6 +39,29 @@ def _old_greedy_agent_generator():
     return p_old_greedy_agent
 
 
+def kmeans_roomba_generator():
+    def p_kmeans_roomba(percepts):
+        if percepts['Dirty']:
+            return 'GrabObject'
+        else:
+            agent_location = (0, 0)
+            agent_heading = percepts['Compass']
+            # collect communication data
+            # use a set comprehension to remove duplicates and convert back to a list
+
+            dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
+            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}
+            unoccupied_dirts = list(dirts-vacuums)
+
+            if dirts or unoccupied_dirts:
+                nearest_dirt = find_nearest(agent_location, list(dirts)) # unoccupied_dirts)
+                command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
+                return command
+
+            return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
+    return p_kmeans_roomba
+
+
 def greedy_roomba_generator():
     def p_greedy_roomba(percepts):
         if percepts['Dirty']:
@@ -49,13 +72,14 @@ def greedy_roomba_generator():
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
             dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
-            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'GreedyAgentWithRangePerception'}
-            unoccupied_dirts = list(dirts.difference(vacuums))
+            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}   # TODO: This needs a better way to detect vacuums
+            unoccupied_dirts = list(dirts-vacuums)
 
             if unoccupied_dirts:
                 nearest_dirt = find_nearest(agent_location, unoccupied_dirts)
                 command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                 return command
+
             return random.choice(['TurnRight', 'TurnLeft', 'MoveForward', 'MoveForward', 'MoveForward', 'MoveForward'])
     return p_greedy_roomba
 
@@ -115,16 +139,16 @@ def basic_state_estimator_generator():
     def se_basic_state_estimator(percepts, comms):
         if not 'Objects' in percepts: percepts['Objects'] = [] # if percepts['Objects'] is empty, initialize it as an empty list
         for comm in comms.values():
-            if 'Objects' in comm: percepts['Objects'] += [(o[0], (  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
-                            o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1])) for
-                            o in comm['Objects']]
+            if 'Objects' in comm:
+                for o in comm['Objects']:
+                    if (o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]) == (0,0) and o[0] == 'Dirt':
+                        print(o, comm['GPS'], percepts['GPS'])
+                percepts['Objects'] += [(o[0],  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
+                            (o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]))
+                            for o in comm['Objects']]
 
         # convert dirts to a set to remove duplicates and convert back to a list
         percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
-
-        for o in percepts['Objects']:
-            if o[1][0] > 19 or o[1][1] > 19:
-                print(percepts['GPS'], o)
 
         return percepts
     return se_basic_state_estimator

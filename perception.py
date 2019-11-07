@@ -1,5 +1,6 @@
 from utils import vector_add
 from objects import *
+import agents
 
 class Perceptor():
     def __init__(self, env):
@@ -33,8 +34,10 @@ class RangePerceptor(Perceptor):
             objs = self.env.objects_near(agent.location, agent.sensor_r)
         else:
             objs = self.env.objects_near(agent.location, self.default_r)
-        return {'Objects':[(obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
-                for obj in objs]}
+        return {'Objects':[('Agent' if isinstance(o,agents.Agent) else o.__class__.__name__, (o.location[0]-agent.location[0],o.location[1]-agent.location[1]))
+                for o in objs]}
+        #return {'Objects':[('Agent' if isinstance(obj,agents.Agent) else obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
+        #        for obj in objs]}
 
 class GPSPerceptor(Perceptor):
     def percept(self, agent):

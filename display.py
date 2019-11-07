@@ -128,6 +128,7 @@ class EnvFrame(tk.Frame):
                         'GreedyAgent':'robot-%s',
                         'RandomReflexAgent':'robot-%s',
                         'GreedyAgentWithoutRangePerception':'robot-%s',
+                        'KMeansAgentWithNetworkComms':'robot-%s',
                         'GreedyDrone':'drone-%s',
                         'Truck':'truck-%s',
                         'Dirt':'dirt',

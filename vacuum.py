@@ -115,15 +115,18 @@ class Environment:
         "Default location to place a new object with unspecified location"
         return None
 
+
     def exogenous_change(self):
 	    "If there is spontaneous change in the world, override this."
 	    pass
+
 
     def is_done(self):
         "By default, we're done when we can't find a live agent."
         for agent in self.agents:
             if agent.is_alive(): return False
         return True
+
 
     def step(self):
         '''Run the environment for one time step. If the
@@ -137,11 +140,16 @@ class Environment:
             for a in self.agents:
                 a.percepts = self.percept(a)
 
+            self.communicator.setup()
             for from_agent in self.agents:  # TODO: how to add communication as an action?
                 self.communicate(from_agent)
 
             for a in self.agents:
+                if a.id == 1:
+                    print(a.percepts)
                 if hasattr(a, "state_estimator"): a.percepts = a.state_estimator(a.percepts, a.comms)
+                if a.id == 1:
+                    print(a.percepts)
 
             # for each agent
             # run agent.program with the agent's preception as an input
@@ -678,6 +686,25 @@ def test10(seed=None):
     plt.show()
 
 
+def test13(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
+
+    # Create agents
+    for i in range(10):
+        o = NewKMeansAgentWithNetworkComms(sensor_radius=6, comms_range=5)
+        #o.actuator_types[3].params['probability'] = .1 if o.actuator_types[3].type is GrabObject else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
+        e.add_object(o, location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
+
+    ef.configure_display()
+    ef.run()
+    ef.mainloop()
+
+
 def test_all(seed=None):
     test0(seed)
     test1(seed)
@@ -692,7 +719,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test7(seed=5)
+    test13(seed=None)
     #test_all()
 
 if __name__ == "__main__":
