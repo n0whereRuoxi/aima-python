@@ -8,7 +8,8 @@ class Communicator():
 
 
     def setup(self):
-        pass
+        for a in self.env.agents:
+            a.comms = {}
 
 
     def get_comms_network(self, from_agent):
@@ -19,7 +20,6 @@ class Communicator():
     def communicate(self, message, from_agent, to_agent):
         '''communicate a message from the from_agent to the to_agent'''
         to_agent.comms[from_agent.id] = message
-        return None
 
 
 class BroadcastCommunicator(Communicator):
@@ -42,6 +42,7 @@ class NetworkCommunicator(Communicator):
 
 
     def setup(self):
+        Communicator.setup(self)
         self.build_network()
 
 

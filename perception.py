@@ -34,7 +34,8 @@ class RangePerceptor(Perceptor):
             objs = self.env.objects_near(agent.location, agent.sensor_r)
         else:
             objs = self.env.objects_near(agent.location, self.default_r)
-        return {'Objects':[('Agent' if isinstance(o,agents.Agent) else o.__class__.__name__, (o.location[0]-agent.location[0],o.location[1]-agent.location[1]))
+        #if ('Dirt', (9, 15)) in [(o.__class__.__name__,o.location) for o in objs]: print('wtf')
+        return {'Objects':[('Agent' if isinstance(o,agents.Agent) else o.__class__.__name__, o.location)
                 for o in objs]}
         #return {'Objects':[('Agent' if isinstance(obj,agents.Agent) else obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
         #        for obj in objs]}

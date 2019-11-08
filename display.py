@@ -190,7 +190,7 @@ class EnvFrame(tk.Frame):
             if isinstance(obj, Agent) and hasattr(obj, 'comms'):
                 print('percepts = %s' % obj.percepts)
                 print('comms = %s' % obj.comms)
-                print('dirts = %s' % obj.dirts)
+                print('dirts = %s' % [o for o in obj.percepts['Objects'] if o[0] == 'Dirt'])
 
     def middle_click(self, event):
         pass

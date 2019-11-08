@@ -145,11 +145,7 @@ class Environment:
                 self.communicate(from_agent)
 
             for a in self.agents:
-                if a.id == 1:
-                    print(a.percepts)
                 if hasattr(a, "state_estimator"): a.percepts = a.state_estimator(a.percepts, a.comms)
-                if a.id == 1:
-                    print(a.percepts)
 
             # for each agent
             # run agent.program with the agent's preception as an input
@@ -237,23 +233,23 @@ class XYEnvironment(Environment):
         return [o for o in self.objects_at(loc) if isinstance(o, cls)]
 
     def objects_near(self, location, radius):
-        "Return all objects within radius of location."
+        """Return all objects within radius of location."""
         radius2 = radius * radius # square radius instead of taking the square root for faster processing
-        return [obj for obj in self.objects if isinstance(obj.location, tuple) and distance2(location, obj.location) <= radius2]
+        return [obj for obj in self.objects if isinstance(obj.location, tuple) and distance(location, obj.location) <= radius]
 
     def default_location(self, obj):
         # If no location is specified, set the location to be a random location in the Environment.
         return (random.choice(self.width), random.choice(self.height))
 
     def move_to(self, obj, destination):
-        "Move an object to a new location."
+        """Move an object to a new location."""
         # Currently move_to assumes that the object is only moving a single cell at a time
         # e.g. agent.location + agent.heading => (x,y) + (0,1)
         #
         # The function finds all objects at the destination that have the blocker flag set.
         # If there are none, move to the destination
 
-        obstacles = [os for os in self.objects_at(destination) if os.blocker]
+        obstacles = [o for o in self.objects_at(destination) if o.blocker]
         if not obstacles:
             obj.location = destination
 
@@ -719,7 +715,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test13(seed=None)
+    test13(seed=5)
     #test_all()
 
 if __name__ == "__main__":

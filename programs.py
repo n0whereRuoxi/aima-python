@@ -44,7 +44,7 @@ def kmeans_roomba_generator():
         if percepts['Dirty']:
             return 'GrabObject'
         else:
-            agent_location = (0, 0)
+            agent_location = percepts['GPS']
             agent_heading = percepts['Compass']
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
@@ -67,7 +67,7 @@ def greedy_roomba_generator():
         if percepts['Dirty']:
             return 'GrabObject'
         else:
-            agent_location = (0, 0)
+            agent_location = percepts['GPS']
             agent_heading = percepts['Compass']
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
@@ -140,15 +140,14 @@ def basic_state_estimator_generator():
         if not 'Objects' in percepts: percepts['Objects'] = [] # if percepts['Objects'] is empty, initialize it as an empty list
         for comm in comms.values():
             if 'Objects' in comm:
-                for o in comm['Objects']:
-                    if (o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]) == (0,0) and o[0] == 'Dirt':
-                        print(o, comm['GPS'], percepts['GPS'])
-                percepts['Objects'] += [(o[0],  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
-                            (o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]))
-                            for o in comm['Objects']]
+                #if ('Dirt', (9, 15)) in comm['Objects']: print('wtf =', comm['GPS'])
+                percepts['Objects'] += comm['Objects']  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
+                # percepts['Objects'] += [(o[0],  # o[1] is the location tuple, and o[1][0] is the x and o[1][1] is the y
+                #            (o[1][0] + comm['GPS'][0] - percepts['GPS'][0], o[1][1] + comm['GPS'][1] - percepts['GPS'][1]))
+                #            for o in comm['Objects']]
 
         # convert dirts to a set to remove duplicates and convert back to a list
-        percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
+        #percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
 
         return percepts
     return se_basic_state_estimator
