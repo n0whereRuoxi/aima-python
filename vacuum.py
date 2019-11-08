@@ -10,6 +10,8 @@ import inspect
 import random, copy, warnings
 from functools import partial
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 # import my files
 from agents import *
@@ -651,8 +653,8 @@ def test10(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
-    width_max = 100
-    height_max = 100
+    width_max = 40
+    height_max = 40
 
     EnvFactory = partial(NewVacuumEnvironment,width=width_max,height=height_max,config="random dirt")
     envs = [EnvFactory() for i in range(10)]
@@ -692,13 +694,100 @@ def test13(seed=None):
 
     # Create agents
     for i in range(10):
-        o = NewKMeansAgentWithNetworkComms(sensor_radius=6, comms_range=5)
-        #o.actuator_types[3].params['probability'] = .1 if o.actuator_types[3].type is GrabObject else warnings.warn('actuator_type[3] is type %s not type GrabObject' % o.actuator_types[3].type)
+        o = NewKMeansAgentWithNetworkComms(sensor_radius=3, comms_range=10)
         e.add_object(o, location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
 
     ef.configure_display()
     ef.run()
     ef.mainloop()
+
+
+def test14(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    repetitions = 10
+
+    width_max = 20
+    height_max = 20
+
+    EnvFactory = partial(NewVacuumEnvironment,width=width_max,height=height_max,config="random dirt")
+    envs = [EnvFactory() for i in range(repetitions)]
+    # Return the mean score of running an agent in each of the envs, for steps
+    results = []
+    num_agents = 10
+    comms_range = range(1,11,2)
+    sensor_range = range(1,11,2)
+    results = np.zeros((len(comms_range),len(sensor_range)))
+    for i, cr in enumerate(comms_range):
+        for j, sr in enumerate(sensor_range):
+            total = 0
+            steps = 1000
+            count = 0
+            for env in copy.deepcopy(envs):
+                count += 1
+                with Timer(name='Simulation Timer - # of Comms Range=%s - Sensor Range=%s - Environment=%s' % (cr, sr, count), format='%.4f'):
+                    for n in range(num_agents):
+                        o = NewKMeansAgentWithNetworkComms(sensor_radius=sr, comms_range=cr)
+                        env.add_object(o, location=(
+                            random.randrange(1, width_max - 2), random.randrange(1, width_max - 2))).id = n + 1
+
+                    env.run(steps)
+                    total += env.t
+            results[i,j] = float(total)/len(envs)
+
+    print(results)
+
+    X,Y = np.meshgrid(comms_range, sensor_range)
+    f = plt.figure()
+    ax = f.gca(projection = '3d')
+
+    surf = ax.plot_surface(X, Y, np.transpose(results), cmap=cm.coolwarm,
+                       linewidth=0, antialiased=False)
+
+
+
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],current_seed))
+    ax.set_xlabel('comms range')
+    ax.set_ylabel('sensor range')
+    ax.set_zlabel('time to clean')
+    plt.show()
+
+
+def test15(seed=None):
+    # set a seed to provide repeatable outcomes each run
+    set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    repetitions = 10
+    width_max = 20
+    height_max = 20
+    num_agents = 10
+
+    EnvFactory = partial(NewVacuumEnvironment,width=width_max,height=height_max,config="random dirt")
+    envs = [EnvFactory() for i in range(repetitions)]
+    "Return the mean score of running an agent in each of the envs, for steps"
+    results = []
+    comms_range = range(1,11,2)
+    for cr in comms_range:
+        total = 0
+        steps = 1000
+        i = 0
+        for env in copy.deepcopy(envs):
+            i+=1
+            with Timer(name='Simulation Timer - # of Agents=%s - p=%.3f - Environment=%s' % (num_agents, 1/num_agents, i), format='%.4f'):
+                for n in range(num_agents):
+                    o = NewKMeansAgentWithNetworkComms(sensor_radius=5, comms_range=cr)
+                    env.add_object(o, location=(random.randrange(1, width_max-2), random.randrange(1, width_max-2))).id = n + 1
+
+                env.run(steps)
+                total += env.t
+        results.append(float(total)/len(envs))
+    plt.plot(comms_range,[r for r in results],'r-')
+    plt.title('scenario=%s(), seed=%s' % (inspect.stack()[0][3],current_seed))
+    plt.xlabel('comms range')
+    plt.ylabel('time to fully clean')
+    plt.show()
+
 
 
 def test_all(seed=None):
@@ -715,7 +804,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test13(seed=3741)
+    test13(seed=None)
     #test_all()
 
 if __name__ == "__main__":

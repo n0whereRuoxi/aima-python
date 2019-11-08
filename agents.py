@@ -229,7 +229,7 @@ def NewKMeansAgentWithNetworkComms(debug=False, sensor_radius=10, comms_range=5)
     "Randomly choose one of the actions from the vaccum environment."
     # the extra forwards are just to alter the probabilities
     if debug:
-        return DebugAgent(KMeansAgentWithNetworkComms(sensor_radius=sensor_radius))
+        return DebugAgent(KMeansAgentWithNetworkComms(sensor_radius=sensor_radius, comms_range=comms_range))
     else:
         return KMeansAgentWithNetworkComms(sensor_radius=sensor_radius, comms_range=comms_range)
 
