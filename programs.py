@@ -1,9 +1,9 @@
 # define the list of programs available to agents
 
-import random
+import random, math
 import numpy as np
 from scipy import spatial
-from utils import distance2, unit_vector, vector_add, scalar_vector_product, vector_average
+from utils import distance, distance2, unit_vector, vector_add, scalar_vector_product, vector_average
 
 
 ########################################################################################################################
@@ -49,12 +49,19 @@ def kmeans_roomba_generator():
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
 
-            dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
-            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}
-            unoccupied_dirts = list(dirts-vacuums)
+            dirts = list({o[1] for o in percepts['Objects'] if o[0] == 'Dirt'})
 
-            if dirts or unoccupied_dirts:
-                nearest_dirt = find_nearest(agent_location, list(dirts)) # unoccupied_dirts)
+            if dirts:
+                vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Agent'})
+                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 5)
+
+                assignments = optimal_assignments(list(vacuums), dirt_means, dirt_clusters)
+
+                my_cluster = dirt_clusters[dirt_means.index(assignments[vacuums.index(agent_location)])]
+                if my_cluster == []:
+                    nearest_dirt = assignments[vacuums.index(agent_location)]
+                else:
+                    nearest_dirt = find_nearest(agent_location, my_cluster)
                 command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                 return command
 
@@ -195,3 +202,68 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
                     return 'TurnRight'
                 else:
                     return 'TurnLeft'
+
+
+def k_means(X, k, n):
+    # INITIALIZATION
+    # return two vectors for the minimum and maximum point values for each dimension in the data
+    # Xmin = (x1_min, x2_min, ... xn_min); Xmax = (x1_max, x2_max, ... xn_max)
+    #Xmin = tuple([min(l) for l in zip(*X)])
+    #Xmax = tuple([max(l) for l in zip(*X)])
+
+    # initialize the means by generating random means between Xmin and Xmax
+    #means = [tuple([random.uniform(Xmin[d],Xmax[d]) for d in range(len(Xmin))]) for i in range(k)]
+
+    if k <= len(X):
+        means = random.sample(X,k)
+    else:
+        means = X + random.choices(X,k=k-len(X))
+
+    for i in range(n):
+        dists = [[distance2(u,x) for u in means] for x in X]    # using distance squared because square roots
+                                                                # are expensive and argmin(x) == argmin(x^2)
+        clusters = [[x for (x, ds) in zip(X, dists) if ds.index(min(ds)) == i] for i in range(k)]
+
+        means = [vector_average(xs) if xs else u for (xs,u) in zip(clusters, means)]
+
+    return (clusters, means)
+
+
+def optimal_assignments(ag_locs, means, clusters):
+    # initialize the assignments
+    assignments = random.sample(means,k=len(means))
+
+    for iter in range(10):
+        for i in range(len(means)):
+            dists = []
+            for j in range(len(means)):
+                new_assignments = assignments.copy()
+                new_assignments[j],new_assignments[i] = new_assignments[i],new_assignments[j]
+                dists.append(cum_distance_of_assignment(ag_locs,new_assignments))
+            best_j = dists.index(min(dists))
+            assignments[best_j],assignments[i] = assignments[i],assignments[best_j]
+    return assignments
+
+
+def cum_distance_of_assignment(ag_locs, assignment):
+    return sum([distance(loc,asgn) for (loc,asgn) in zip(ag_locs,assignment)])
+
+
+if __name__ == '__main__':
+    X = [(random.gauss(5,1), random.gauss(10,3)) for x in range(10)] + [(random.gauss(10,2), random.gauss(5,2)) for x in range(20)]
+    print(X)
+    (c,m) = k_means(X, 5, 5)
+
+    print(c)
+    print(m)
+
+    agent_locs = [(5,5),(5,10),(10,5),(10,10),(7.5,7.5)]
+    assignments = optimal_assignments(agent_locs,m,c)
+
+    print('assignments =', list(zip(agent_locs, assignments)))
+
+    import matplotlib.pyplot as plot
+
+    plot.plot(*zip(*X),'b.')
+    plot.plot(*zip(*m),'r*')
+    plot.show()

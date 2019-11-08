@@ -48,7 +48,7 @@ old_seed = random.seed  # store the old seed function in old_seed
 def new_seed(a=None): # create a new_seed function to add new behavior before old_seed
     if a == None:                   # if the seed is random
         print('seed is None, generating random seed')
-        a = random.getrandbits(20)  # then create a random 20 bit number (1 in 1,000,000)
+        a = random.getrandbits(16)  # then create a random 20 bit number (1 in 1,000,000)
     random.current_seed = a         # store the seed value in random.current_seed if hasattr(random,'current_seed') else '??' if hasattr(random,'current_seed') else '??'
     old_seed(a)                     # run the old_seed function with the seed value (a)
 
@@ -60,7 +60,7 @@ current_seed = None
 def set_seed(a=None):
     if a == None:  # if the seed is random
         print('seed is None, generating random seed')
-        a = random.getrandbits(20)  # then create a random 20 bit number (1 in 1,000,000)
+        a = random.getrandbits(16)  # then create a random 20 bit number (1 in 1,000,000)
     global current_seed
     current_seed = a  # store the seed value in current_seed if hasattr(random,'current_seed') else '??' if hasattr(random,'current_seed') else '??'
     random.seed(a)
@@ -715,7 +715,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test13(seed=5)
+    test13(seed=3741)
     #test_all()
 
 if __name__ == "__main__":
