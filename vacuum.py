@@ -434,18 +434,19 @@ def test_agent(AgentFactory, steps, envs):
 
 def test0(seed=None):
     # set a seed to provide repeatable outcomes each run
+    print(f"seed set to {seed}")
     random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3], seed))
 
     # Create agents
 
     e.add_object(GreedyAgentWithRangePerception(sensor_radius=3))
 
     ef.configure_display()
-    ef.run()
+    # ef.run()
     ef.mainloop()
 
 
@@ -744,7 +745,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test0()
+    test11(1)
     #test_all()
 
 if __name__ == "__main__":
