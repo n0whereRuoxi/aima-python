@@ -434,19 +434,18 @@ def test_agent(AgentFactory, steps, envs):
 
 def test0(seed=None):
     # set a seed to provide repeatable outcomes each run
-    print(f"seed set to {seed}")
     random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
     e = NewVacuumEnvironment(width=20,height=20,config="random dirt")
     ef = EnvFrame(e,root=tk.Tk(),cellwidth=30,
-                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3], seed))
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],random.current_seed if hasattr(random,'current_seed') else '??'))
 
     # Create agents
 
     e.add_object(GreedyAgentWithRangePerception(sensor_radius=3))
 
     ef.configure_display()
-    # ef.run()
+    ef.run()
     ef.mainloop()
 
 
@@ -670,12 +669,13 @@ def test11(seed=None):
     # set a seed to provide repeatable outcomes each run
     random.seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
+    environment_width = 50
+    environment_height = 50
     team_size = 30
     runs_to_average = 20
+    max_steps = 3000
     sensor_radius_min = 5
     sensor_radius_max = 15
-    environment_width = 200
-    environment_height = 200
 
     EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
     envs = [EnvFactory() for i in range(runs_to_average)]
@@ -688,7 +688,6 @@ def test11(seed=None):
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
         for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
             total = 0
-            max_steps = 2000
             i = 0
             num_roomba = team_size - num_drones
             proportion_roomba = num_roomba / team_size
@@ -715,7 +714,7 @@ def test11(seed=None):
 
         # After iterating over all teams, save current data
         test11_data = {"s": s, "e": e, "c": c}
-        pickle.dump(test11_data, open(f"test11_iter{sensor_radius}.p", "wb"))
+        pickle.dump(test11_data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
 
     print(f"s={s}")
     print(f"e={e}")
@@ -745,7 +744,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test11(1)
+    test0()
     #test_all()
 
 if __name__ == "__main__":
