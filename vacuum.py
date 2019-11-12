@@ -707,13 +707,13 @@ def test13(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
-    e = NewVacuumEnvironment(width=50, height=50, config="random dirt")
-    ef = EnvFrame(e,root=tk.Tk(), cellwidth=15,
+    e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
     for i in range(10):
-        o = NewKMeansAgentWithNetworkComms(sensor_radius=5, comms_range=100)
+        o = NewKMeansAgentWithNetworkComms(sensor_radius=5, comms_range=5)
         e.add_object(o, location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
 
     ef.configure_display()
@@ -847,7 +847,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test16(seed=None)
+    test15(seed=None)
     #test_all()
 
 if __name__ == "__main__":

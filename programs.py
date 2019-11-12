@@ -53,7 +53,7 @@ def kmeans_roomba_generator():
 
             if dirts:
                 vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Agent'})
-                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 5)
+                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 5, list(vacuums))
 
                 assignments = optimal_assignments(list(vacuums), dirt_means, dirt_clusters)
 
@@ -165,9 +165,8 @@ def basic_state_estimator_generator():
 ########################################################################################################################
 
 def find_nearest(agent_location, dirts):
-    if len(dirts) == 1:
-        return dirts[0]
-    return dirts[spatial.KDTree(np.asarray(dirts)).query(np.asarray(agent_location))[1]]
+    dists = [distance2(agent_location, d) for d in dirts]
+    return dirts[dists.index(min(dists))]
 
 def go_to(agent_location, agent_heading, nearest_dirt, bump):
     if agent_heading[0] == 0:
@@ -204,20 +203,19 @@ def go_to(agent_location, agent_heading, nearest_dirt, bump):
                     return 'TurnLeft'
 
 
-def k_means(X, k, n):
+def k_means(X, k, n, init=None):
     # INITIALIZATION
     # return two vectors for the minimum and maximum point values for each dimension in the data
-    # Xmin = (x1_min, x2_min, ... xn_min); Xmax = (x1_max, x2_max, ... xn_max)
-    #Xmin = tuple([min(l) for l in zip(*X)])
-    #Xmax = tuple([max(l) for l in zip(*X)])
 
-    # initialize the means by generating random means between Xmin and Xmax
-    #means = [tuple([random.uniform(Xmin[d],Xmax[d]) for d in range(len(Xmin))]) for i in range(k)]
-
-    if k <= len(X):
-        means = random.sample(X,k)
+    # initialize the means by selecting random points from the dirts
+    if init is None or len(init)!=k:
+        if k <= len(X):
+            means = random.sample(X,k)
+        else:
+            means = X + random.choices(X,k=k-len(X))
     else:
-        means = X + random.choices(X,k=k-len(X))
+        if len(init)!=k: print('init is the incorrect size')
+        means = init
 
     for i in range(n):
         dists = [[distance2(u,x) for u in means] for x in X]    # using distance squared because square roots
