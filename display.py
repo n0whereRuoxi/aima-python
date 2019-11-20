@@ -165,9 +165,9 @@ class EnvFrame(tk.Frame):
                 ms = int(1000 * max(float(self.delay), 0.01))
                 self.after(ms, self.background_run)
 
-    def run(self):
+    def run(self, pause=False):
         print('run')
-        self.running = 1
+        self.running = not pause
         self.background_run()
 
     def next_step(self):
@@ -176,7 +176,7 @@ class EnvFrame(tk.Frame):
 
     def stop(self):
         print('stop')
-        self.running = 0
+        self.running = False
 
     def left_click(self, event):
         loc = (int(event.x / (self.cellwidth + 1)), int(event.y / (self.cellwidth + 1)))

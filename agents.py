@@ -115,7 +115,7 @@ def NewGreedyAgentWithRangePerception(debug=False, sensor_radius=10, communicati
     if debug:
         return DebugAgent(GreedyAgentWithRangePerception(sensor_radius=sensor_radius))
     else:
-        return GreedyAgentWithRangePerception(sensor_radius=sensor_radius)
+        return GreedyAgentWithRangePerception(sensor_radius=sensor_radius, communication=communication)
 
 class GreedyAgentWithoutRangePerception(XYAgent):
     '''

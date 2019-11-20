@@ -53,7 +53,7 @@ def kmeans_roomba_generator():
 
             if dirts:
                 vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Agent'})
-                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 5, list(vacuums))
+                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 10, list(vacuums))
 
                 assignments = optimal_assignments(list(vacuums), dirt_means, dirt_clusters)
 

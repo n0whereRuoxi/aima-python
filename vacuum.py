@@ -296,6 +296,19 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
     # Generate walls with dead cells in the center
     if config==None:
         pass
+    elif config=='empty':
+        # no dirt
+        # extend exogenous_change with function to detect if no dirt is left
+        old_exogenous_chage = e.exogenous_change
+
+        def new_exogenous_change(self):
+            old_exogenous_chage()
+            if not [d for d in self.objects_of_type(Dirt) if isinstance(d.location, tuple)]:
+                for a in self.agents:
+                    a.alive = False
+                    a.performance = self.t
+
+        e.exogenous_change = MethodType(new_exogenous_change, e)
     elif config == 'shape of eight':
         for x in [2,3]:
             for y in [2,3]:
@@ -777,7 +790,7 @@ def test15(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
-    repetitions = 25
+    repetitions = 10
     width_max = 50
     height_max = 50
     num_agents = 10
@@ -787,7 +800,7 @@ def test15(seed=None):
     "Return the mean score of running an agent in each of the envs, for steps"
     results = []
     sr = 10
-    comms_range = range(10,31,2)
+    comms_range = range(10,51,2)
     for cr in comms_range:
         total = 0
         steps = 1000
@@ -802,7 +815,7 @@ def test15(seed=None):
                 env.run(steps)
                 total += env.t
         results.append(float(total)/len(envs))
-    plt.plot(comms_range,[r for r in results],'r-')
+    plt.plot(comms_range,[r for r in results],'r-')         # TODO: add in confidence intervals for the data points
     plt.title('scenario=%s(), seed=%s, sensor radius = %s, (%sx%s) w/ %s roombas' % (inspect.stack()[0][3],current_seed, sr, width_max, height_max, num_agents))
     plt.xlabel('comms range')
     plt.ylabel('time to fully clean')
@@ -813,24 +826,55 @@ def test16(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
+    kmeans = True  # change this to toggle between k-means and greedy agent behavior
+
     e = NewVacuumEnvironment(width=50, height=50, config="corner dirt")
-    ef = EnvFrame(e,root=tk.Tk(), cellwidth=15,
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=18,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
     i = 0
-    for (x,y) in [(19,19),(19,29),(19,29),(19,29)]:
+    for (x,y) in [(14,14),(14,24),(24,14),(24,24)]:
         i += 1
-        o = NewKMeansAgentWithNetworkComms(sensor_radius=100, comms_range=100)
+        if kmeans:
+            o = NewKMeansAgentWithNetworkComms(sensor_radius=10, comms_range=30)
+        else:
+            o = NewGreedyAgentWithRangePerception(sensor_radius=100, communication=True)
         e.add_object(o, location=(x,y)).id = i
 
     e.add_object(Dirt(), location=(24,25))
 
     ef.configure_display()
-    ef.run()
+    ef.run(pause=True)
     ef.mainloop()
 
 
+def test17(seed=None, kmeans=True):
+    # set a seed to provide repeatable outcomes each run
+    set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    e = NewVacuumEnvironment(width=50, height=50, config="empty")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=15,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
+
+    # Create agents
+    i = 0
+    for (x,y) in [(20,20),(20,21),(21,20),(21,21)]:
+        i += 1
+        if kmeans:
+            o = NewKMeansAgentWithNetworkComms(sensor_radius=100, comms_range=100)
+        else:
+            o = NewGreedyAgentWithRangePerception(sensor_radius=100, communication=True)
+        e.add_object(o, location=(x,y)).id = i
+
+    e.add_object(Dirt(), location=(1,1))
+    e.add_object(Dirt(), location=(44,1))
+    e.add_object(Dirt(), location=(1,48))
+    e.add_object(Dirt(), location=(48,48))
+
+    ef.configure_display()
+    ef.run(pause=True)
+    ef.mainloop()
 
 
 def test_all(seed=None):
@@ -847,7 +891,8 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test15(seed=None)
+    #test17(seed=None, kmeans=True)
+    test15()
     #test_all()
 
 if __name__ == "__main__":
