@@ -19,6 +19,7 @@ from objects import *
 from display import *
 from comms import *
 import json
+import utils
 
 '''Implement Agents and Environments (Chapters 1-2).
 
@@ -799,10 +800,11 @@ def test15(seed=None):
     envs = [EnvFactory() for i in range(repetitions)]
     "Return the mean score of running an agent in each of the envs, for steps"
     results = []
+    confidence_intervals = []
     sr = 10
     comms_range = range(10,51,2)
     for cr in comms_range:
-        total = 0
+        total = []
         steps = 1000
         i = 0
         for env in copy.deepcopy(envs):
@@ -813,9 +815,11 @@ def test15(seed=None):
                     env.add_object(o, location=(random.randrange(1, width_max-2), random.randrange(1, width_max-2))).id = n + 1
 
                 env.run(steps)
-                total += env.t
-        results.append(float(total)/len(envs))
-    plt.plot(comms_range,[r for r in results],'r-')         # TODO: add in confidence intervals for the data points
+                total.append(env.t)
+        results.append(float(sum(total))/len(envs))
+        _, start, end = confidence_interval(total) # 95% CI by default
+        confidence_intervals.append((end-start) / 2)
+    plt.errorbar(comms_range,[r for r in results], yerr=confidence_intervals, label='95% confidence interval')
     plt.title('scenario=%s(), seed=%s, sensor radius = %s, (%sx%s) w/ %s roombas' % (inspect.stack()[0][3],current_seed, sr, width_max, height_max, num_agents))
     plt.xlabel('comms range')
     plt.ylabel('time to fully clean')
