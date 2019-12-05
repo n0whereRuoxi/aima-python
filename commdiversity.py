@@ -105,7 +105,7 @@ def plotTest11PickleDataRatio(environment_width, environment_height, team_size, 
     plt.show()
 
 def plotBestTeams(environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius):
-    filename = "50_50_30_20_3000_5to15/test11_%s_%s_%s_%s_%s_iter%s.p" % (environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius)
+    filename = "../50_50_30_20_3000_5to15/test11_%s_%s_%s_%s_%s_iter%s.p" % (environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius)
     test_11_data = pickle.load(open(filename, "rb"))
 
     s = test_11_data['s']
@@ -117,7 +117,8 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
     # Top 10 best performing teams
     # Plot Avg Completion Time vs Roomba Ratio
     top = 10
-    sensor_radii_to_plot = [15, 13, 11, 9, 7]
+    sensor_radii_to_plot = [15, 14, 13, 12, 11, 10, 9]
+    plt.gca().set_prop_cycle(plt.cycler('color', plt.cm.jet(np.linspace(0, 0.9, len(sensor_radii_to_plot)))))
     for j, sensor_radii in enumerate(sensor_radii_to_plot):
         start_index_of_data = (sensor_radii - min_sensor_radius) * team_size
         current_avg_completion_data = c[start_index_of_data:start_index_of_data + team_size]
