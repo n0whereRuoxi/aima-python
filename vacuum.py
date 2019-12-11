@@ -673,9 +673,9 @@ def test11(seed=None):
     environment_width = 50
     environment_height = 50
     team_size = 30
-    runs_to_average = 20
+    runs_to_average = 100
     max_steps = 3000
-    sensor_radius_min = 5
+    sensor_radius_min = 9
     sensor_radius_max = 15
 
     EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
