@@ -105,13 +105,13 @@ def plotTest11PickleDataRatio(environment_width, environment_height, team_size, 
     plt.show()
 
 def plotBestTeams(environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius):
-    filename = "../50_50_30_20_3000_5to15/test11_%s_%s_%s_%s_%s_iter%s.p" % (environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius)
+    filename = "../50_50_30_100_3000_9to15/test11_%s_%s_%s_%s_%s_iter%s.p" % (environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius)
     test_11_data = pickle.load(open(filename, "rb"))
 
     s = test_11_data['s']
     c = test_11_data['c']
 
-    min_sensor_radius = 5
+    min_sensor_radius = 9
     ratios = [(team_size-i)/team_size for i in range(0, team_size)] * (sensor_radius - min_sensor_radius + 1)
 
     # Top 10 best performing teams
@@ -123,25 +123,26 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
         start_index_of_data = (sensor_radii - min_sensor_radius) * team_size
         current_avg_completion_data = c[start_index_of_data:start_index_of_data + team_size]
         current_ratio_data = ratios[start_index_of_data:start_index_of_data + team_size]
-        best_teams = []
-        for i in range(top):
-            min_avg_completion = min(current_avg_completion_data)
-            min_index = current_avg_completion_data.index(min_avg_completion)
 
-            best_teams.append((current_ratio_data[min_index], current_avg_completion_data[min_index]))
-
-            del current_ratio_data[min_index]
-            del current_avg_completion_data[min_index]
+        # best_teams = []
+        # for i in range(top):
+        #     min_avg_completion = min(current_avg_completion_data)
+        #     min_index = current_avg_completion_data.index(min_avg_completion)
+        #
+        #     best_teams.append((current_ratio_data[min_index], current_avg_completion_data[min_index]))
+        #
+        #     del current_ratio_data[min_index]
+        #     del current_avg_completion_data[min_index]
 
         # Sort data to plot a line
-        sorted_by_ratio = sorted(best_teams, key=(lambda tup: tup[0]))
-        best_teams_x = [tup[0] for tup in sorted_by_ratio]
-        best_teams_y = [tup[1] for tup in sorted_by_ratio]
-        plt.plot(best_teams_x, best_teams_y)
+        # sorted_by_ratio = sorted(best_teams, key=(lambda tup: tup[0]))
+        # best_teams_x = [tup[0] for tup in sorted_by_ratio]
+        # best_teams_y = [tup[1] for tup in sorted_by_ratio]
+        plt.plot(current_ratio_data, current_avg_completion_data)
 
     legend = ["sensor_radius="+str(x) for x in sensor_radii_to_plot]
     plt.legend(legend, loc='upper left')
-    plt.title('Top 10 Best Roomba/Drone Teams for varying drone sensor_radius (50x50 env, average over 20 samples each)')
+    plt.title('Roomba/Drone Teams of size %s for varying drone sensor_radius (%sx%s env, average over %s samples each)' % (team_size, environment_height, environment_width, runs_to_average))
     plt.xlabel('Ratio of Roomba')
     plt.ylabel('Avg Completion Time')
     plt.show()
@@ -150,7 +151,7 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
 def main():
     #plotTest11()
     #plotTest11PickleDataRatio(50,50,30,20,3000,15)
-    plotBestTeams(50,50,30,20,3000,15)
+    plotBestTeams(50,50,30,100,3000,15)
 
 if __name__ == "__main__":
     # execute only if run as a script
