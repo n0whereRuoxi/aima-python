@@ -115,22 +115,36 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
     ratios = [(team_size-i)/team_size for i in range(0, team_size)] * (sensor_radius - min_sensor_radius + 1)
 
     # Plot Avg Completion Time vs Roomba Ratio
-    smoothWindow = 7 # Should be odd
-    sensor_radii_to_plot = [15, 14, 13, 12, 11, 10, 9]
+    # smoothWindow = 7 # Should be odd
+    sensor_radii_to_plot = [15]#[15, 14, 13, 12, 11, 10, 9]
     plt.gca().set_prop_cycle(plt.cycler('color', plt.cm.jet(np.linspace(0, 0.9, len(sensor_radii_to_plot)))))
     for j, sensor_radii in enumerate(sensor_radii_to_plot):
         start_index_of_data = (sensor_radii - min_sensor_radius) * team_size
         current_avg_completion_data = c[start_index_of_data:start_index_of_data + team_size]
         current_ratio_data = ratios[start_index_of_data:start_index_of_data + team_size]
 
-        x = smoothData(current_ratio_data, smoothWindow)
-        y = smoothData(current_avg_completion_data, smoothWindow)
-        annot_min(np.array(x),np.array(y))
-        plt.plot(x, y)
+        x = current_ratio_data#smoothData(current_ratio_data, smoothWindow)
+        y = current_avg_completion_data#smoothData(current_avg_completion_data, smoothWindow)
+
+        # calculate polynomial
+        z = np.polyfit(x, y, 2)
+        f = np.poly1d(z)
+
+        # calculate new x's and y's
+        x_new = np.linspace(x[0], x[-1], 50)
+        y_new = f(x_new)
+
+        # annot_min(np.array(x),np.array(y))
+        plt.plot(x, y, 'o', x_new, y_new)
+
+
+        ax = plt.gca()
+        ax.text(0, 1030, f"y={z[0]}x^2+({z[1]})x + {z[2]}")
+        ax.text(0, 950, "Minimum at {:.3f}".format(-z[1]/(2*z[0])))
 
     legend = ["sensor_radius="+str(x) for x in sensor_radii_to_plot]
     plt.legend(legend, loc='upper left')
-    plt.title('Roomba/Drone Teams of Size %s for varying drone sensor_radius (%sx%s env, average over %s samples each, moving average with window=%s)' % (team_size, environment_height, environment_width, runs_to_average, smoothWindow))
+    plt.title('Roomba/Drone Teams of Size %s for varying drone sensor_radius (%sx%s env, average over %s samples each)' % (team_size, environment_height, environment_width, runs_to_average))
     plt.xlabel('Ratio of Roomba')
     plt.ylabel('Avg Completion Time')
     plt.show()
