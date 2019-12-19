@@ -114,9 +114,8 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
     min_sensor_radius = 9
     ratios = [(team_size-i)/team_size for i in range(0, team_size)] * (sensor_radius - min_sensor_radius + 1)
 
-    # Top 10 best performing teams
     # Plot Avg Completion Time vs Roomba Ratio
-    top = 10
+    smoothWindow = 7 # Should be odd
     sensor_radii_to_plot = [15, 14, 13, 12, 11, 10, 9]
     plt.gca().set_prop_cycle(plt.cycler('color', plt.cm.jet(np.linspace(0, 0.9, len(sensor_radii_to_plot)))))
     for j, sensor_radii in enumerate(sensor_radii_to_plot):
@@ -124,29 +123,38 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
         current_avg_completion_data = c[start_index_of_data:start_index_of_data + team_size]
         current_ratio_data = ratios[start_index_of_data:start_index_of_data + team_size]
 
-        # best_teams = []
-        # for i in range(top):
-        #     min_avg_completion = min(current_avg_completion_data)
-        #     min_index = current_avg_completion_data.index(min_avg_completion)
-        #
-        #     best_teams.append((current_ratio_data[min_index], current_avg_completion_data[min_index]))
-        #
-        #     del current_ratio_data[min_index]
-        #     del current_avg_completion_data[min_index]
-
-        # Sort data to plot a line
-        # sorted_by_ratio = sorted(best_teams, key=(lambda tup: tup[0]))
-        # best_teams_x = [tup[0] for tup in sorted_by_ratio]
-        # best_teams_y = [tup[1] for tup in sorted_by_ratio]
-        plt.plot(current_ratio_data, current_avg_completion_data)
+        x = smoothData(current_ratio_data, smoothWindow)
+        y = smoothData(current_avg_completion_data, smoothWindow)
+        annot_min(np.array(x),np.array(y))
+        plt.plot(x, y)
 
     legend = ["sensor_radius="+str(x) for x in sensor_radii_to_plot]
     plt.legend(legend, loc='upper left')
-    plt.title('Roomba/Drone Teams of size %s for varying drone sensor_radius (%sx%s env, average over %s samples each)' % (team_size, environment_height, environment_width, runs_to_average))
+    plt.title('Roomba/Drone Teams of Size %s for varying drone sensor_radius (%sx%s env, average over %s samples each, moving average with window=%s)' % (team_size, environment_height, environment_width, runs_to_average, smoothWindow))
     plt.xlabel('Ratio of Roomba')
     plt.ylabel('Avg Completion Time')
     plt.show()
 
+def smoothData(data, windowSize):
+    # Window size should be odd
+    smoothedData = []
+    sideWindow = int((windowSize-1) / 2)
+    for i in range(sideWindow, len(data)-sideWindow):
+        avg = sum(data[i-sideWindow:i+sideWindow+1]) / windowSize
+        smoothedData.append(avg)
+    return smoothedData
+
+def annot_min(x,y, ax=None):
+    xmax = x[np.argmin(y)]
+    ymax = y.min()
+    text = "x={:.3f}, y={:.3f}".format(xmax, ymax)
+    if not ax:
+        ax = plt.gca()
+    bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+    arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=160")
+    kw = dict(xycoords='data',textcoords="data",
+              arrowprops=arrowprops, bbox=bbox_props, ha="left", va="top")
+    ax.annotate(text, xy=(xmax, ymax), xytext=(xmax+.5,ymax+5), **kw)
 
 def main():
     #plotTest11()
