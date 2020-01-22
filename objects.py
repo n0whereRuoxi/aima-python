@@ -4,7 +4,10 @@ class Object:
     This represents any physical object that can appear in an Environment. You subclass Object to get the objects you
     want.  Each object can have a  .__name__  slot (used for output only).'''
 
-   # Mark: __repr__ exists to create a printable output of an object (in this case, name)
+    def __init__(self, id=''):
+        self.id = id
+
+    # Mark: __repr__ exists to create a printable output of an object (in this case, name)
     def __repr__(self):
         if self.id == '':
             return '<%s>' % getattr(self, '__name__', self.__class__.__name__)
@@ -27,11 +30,11 @@ class Object:
     blocker = False
     #image_source = ''
     #image = None
-    id = ''
 
 class Dirt(Object):
-    def __init__(self):
-        pass
+    def __init__(self, id='', color=None):
+        Object.__init__(self,id=id)
+        self.color = color
 
     def is_grabbable(self, obj):
         if hasattr(obj, 'holding'):

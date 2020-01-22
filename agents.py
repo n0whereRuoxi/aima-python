@@ -234,4 +234,40 @@ def NewKMeansAgentWithNetworkComms(debug=False, sensor_radius=10, comms_range=5)
         return KMeansAgentWithNetworkComms(sensor_radius=sensor_radius, comms_range=comms_range)
 
 
+def NewColorKMeansAgentWithNetworkComms(debug=False, sensor_radius=10, comms_range=5, color='red'):
+    "Randomly choose one of the actions from the vaccum environment."
+    # the extra forwards are just to alter the probabilities
+    ag = KMeansAgentWithNetworkComms(sensor_radius=sensor_radius, comms_range=comms_range)
+    ag.program = programs.a
+    if debug:
+        return DebugAgent(ag)
+    else:
+        return ag
+
+
+class GraphAgent(XYAgent):
+    '''This agent takes action based solely on the percept. [Fig. 2.13]'''
+
+    def __init__(self, comms_range, sensor_radius):
+        XYAgent.__init__(self)
+        self.perceptor_types = [GPSPerceptor, DirtyPerceptor, BumpPerceptor, CompassPerceptor, RangePerceptor, DirtsCleanedPerceptor]
+        self.actuator_types.extend([Component(type=GrabObject), Component(type=ReleaseObject)])
+        self.communicator = NetworkCommunicator if comms_range >= 1 else None
+        self.sensor_r = sensor_radius
+        self.comms_r = comms_range
+        self.comms = {}
+        self.state = {}
+
+        self.program = programs.dag_roomba_generator()
+        self.state_estimator = programs.graph_state_estimator_generator()
+
+
+def NewGraphAgent(debug=False, sensor_radius=10, comms_range=5):
+    ag = GraphAgent(sensor_radius=sensor_radius, comms_range=comms_range)
+    ag.program = programs.a
+    if debug:
+        return DebugAgent(ag)
+    else:
+        return ag
+
 #______________________________________________________________________________

@@ -17,6 +17,7 @@ from matplotlib import cm
 from agents import *
 from objects import *
 from display import *
+from problem import *
 from comms import *
 import json
 
@@ -86,6 +87,7 @@ class Environment:
         self.perceptors = {}
         self.communicator = None
         self.actuators = {}
+        self.problem = None
 
     # Mark: What does this do?  It isn't checked in the Environment class's add_object.
     object_classes = [] ## List of classes that can go into environment
@@ -147,14 +149,20 @@ class Environment:
                 self.communicate(from_agent)
 
             for a in self.agents:
-                if hasattr(a, "state_estimator"): a.percepts = a.state_estimator(a.percepts, a.comms)
+                if hasattr(a, 'state_estimator'):
+                    if hasattr(a, 'state'):
+                        a.percepts = a.state_estimator(a.percepts, a.comms, state=a.state)
+                    else:
+                        a.percepts = a.state_estimator(a.percepts, a.comms)
+                else:       # if there is no state_estimator() then just passthrough the percepts to the state
+                    a.state = a.percepts
 
             # for each agent
-            # run agent.program with the agent's preception as an input
-            # agent's perception = Env.precept(agent)
+            # run agent.program with the agent's state as an input
+            # agent's perception = Env.state(agent)
 
             # generate actions
-            actions = [agent.program(agent.percepts)
+            actions = [agent.program(agent.state)
                        for agent in self.agents]
 
             # for each agent-action pair, have the environment process the actions
@@ -382,7 +390,7 @@ def NewVacuumEnvironment(width=10, height=10, config=None):
 
     elif config=='random dirt':
         for x in range(100):
-            loc = (random.randrange(width), random.randrange(width))
+            loc = (random.randrange(width), random.randrange(height))
             if not (e.find_at(Dirt, loc) or e.find_at(Wall, loc)):
                 e.add_object(Dirt(), loc)
         # extend exogenous_change with function to detect if no dirt is left
@@ -790,7 +798,7 @@ def test15(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
-    repetitions = 10
+    repetitions = 50
     width_max = 50
     height_max = 50
     num_agents = 10
@@ -813,10 +821,10 @@ def test15(seed=None):
                     env.add_object(o, location=(random.randrange(1, width_max-2), random.randrange(1, width_max-2))).id = n + 1
 
                 env.run(steps)
-                total += env.t
+                total += env.t      # TODO: append to a list instead of sum to get more infomration on the variance
         results.append(float(total)/len(envs))
     plt.plot(comms_range,[r for r in results],'r-')         # TODO: add in confidence intervals for the data points
-    plt.title('scenario=%s(), seed=%s, sensor radius = %s, (%sx%s) w/ %s roombas' % (inspect.stack()[0][3],current_seed, sr, width_max, height_max, num_agents))
+    plt.title('scenario=%s(), seed=%s, sensor radius = %s, (%sx%s) w/ %s roombas @ {} repetitions' % (inspect.stack()[0][3],current_seed, sr, width_max, height_max, num_agents, repetitions))
     plt.xlabel('comms range')
     plt.ylabel('time to fully clean')
     plt.show()
@@ -837,7 +845,7 @@ def test16(seed=None):
     for (x,y) in [(14,14),(14,24),(24,14),(24,24)]:
         i += 1
         if kmeans:
-            o = NewKMeansAgentWithNetworkComms(sensor_radius=10, comms_range=30)
+            o = NewKMeansAgentWithNetworkComms(sensor_radius=100, comms_range=30)
         else:
             o = NewGreedyAgentWithRangePerception(sensor_radius=100, communication=True)
         e.add_object(o, location=(x,y)).id = i
@@ -877,6 +885,36 @@ def test17(seed=None, kmeans=True):
     ef.mainloop()
 
 
+def test18(seed=None, kmeans=True):
+    # set a seed to provide repeatable outcomes each run
+    set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
+
+    e = NewVacuumEnvironment(width=50, height=50, config="empty")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=15,
+                    title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
+
+    # Create agents
+    i = 0
+    for (x,y) in [(20,20),(20,21),(21,20),(21,21)]:
+        i += 1
+        if kmeans:
+            o = NewKMeansAgentWithNetworkComms(sensor_radius=100, comms_range=100)
+        else:
+            o = NewGreedyAgentWithRangePerception(sensor_radius=100, communication=True)
+        e.add_object(o, location=(x,y)).id = i
+
+    # create the 'problem'
+    e.problem = Problem(e,n=50,type='acyclic')
+
+    for node in e.problem.graph:
+        d = Dirt(id=node)
+        e.add_object(d, location=(random.randrange(1,e.width-1), random.randrange(1,e.height-1)))
+
+    ef.configure_display()
+    ef.run(pause=False)
+    ef.mainloop()
+
+
 def test_all(seed=None):
     test0(seed)
     test1(seed)
@@ -891,8 +929,8 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    #test17(seed=None, kmeans=True)
-    test15()
+    test17(seed=None, kmeans=True)
+    #test16()
     #test_all()
 
 if __name__ == "__main__":

@@ -23,6 +23,11 @@ class DirtyPerceptor(Perceptor):
     def percept(self, agent):
         return {'Dirty':len(self.env.find_at(Dirt, agent.location))>0}
 
+class DirtsCleanedPerceptor(Perceptor):
+    def percept(self, agent):
+        return {'Cleaned':set(self.env.find_at(Dirt, agent))}
+
+
 class BumpPerceptor(Perceptor):
     def percept(self, agent):
         return {'Bump':len([o for o in self.env.objects_at(vector_add(agent.location, agent.heading)) if o.blocker])>0}

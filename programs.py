@@ -38,6 +38,19 @@ def _old_greedy_agent_generator():
             return ''
     return p_old_greedy_agent
 
+def dag_roomba_generator():
+    def p_dag_roomba(percepts):
+        agent_location = percepts['GPS']
+        agent_heading = percepts['Compass']
+        dirt_target = (1,1)
+
+
+
+
+        command = go_to(agent_location, agent_heading, dirt_target, percepts['Bump'])
+        return command
+
+    return p_dag_roomba
 
 def kmeans_roomba_generator():
     def p_kmeans_roomba(percepts):
@@ -53,7 +66,7 @@ def kmeans_roomba_generator():
 
             if dirts:
                 vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Agent'})
-                (dirt_clusters, dirt_means) = k_means(dirts, len(vacuums), 10, list(vacuums))
+                (dirt_clusters, dirt_means) = k_means(dirts, k=len(vacuums), n=10, init=list(vacuums))
 
                 assignments = optimal_assignments(list(vacuums), dirt_means, dirt_clusters)
 
@@ -61,7 +74,8 @@ def kmeans_roomba_generator():
                 if my_cluster == []:
                     nearest_dirt = assignments[vacuums.index(agent_location)]
                 else:
-                    nearest_dirt = find_nearest(agent_location, my_cluster)
+                    print('empty cluster')
+                    nearest_dirt = find_nearest(agent_location, dirts)
                 command = go_to(agent_location, agent_heading, nearest_dirt, percepts['Bump'])
                 return command
 
@@ -143,7 +157,8 @@ def rule_program_generator():
 ########################################################################################################################
 
 def basic_state_estimator_generator():
-    def se_basic_state_estimator(percepts, comms):
+    def se_basic_state_estimator(percepts, comms, state=None):
+        if state: raise NotImplementedError # this hasn't been done yet...
         if not 'Objects' in percepts: percepts['Objects'] = [] # if percepts['Objects'] is empty, initialize it as an empty list
         for comm in comms.values():
             if 'Objects' in comm:
@@ -154,10 +169,30 @@ def basic_state_estimator_generator():
                 #            for o in comm['Objects']]
 
         # convert dirts to a set to remove duplicates and convert back to a list
-        #percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
+        percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
 
         return percepts
     return se_basic_state_estimator
+
+
+def graph_state_estimator_generator():
+    def se_graph_state_estimator(percepts, comms, state=None):
+        if not 'Objects' in percepts: percepts['Objects'] = []
+        for comm in comms.values():
+            if 'Objects' in comm:
+                percepts['Objects'] += comm['Objects']
+
+            if 'Cleaned' in comm:
+                percepts['Cleaned'] | comm['Cleaned']
+
+        if state:
+            for k in state.keys():
+                pass # merge the values of the state with the values of the
+        else:   # if state is None then there is no state estimation and just pass through the percepts
+            state = percepts
+        return state
+    return se_graph_state_estimator
+
 ########################################################################################################################
 #
 #   HELPERS
