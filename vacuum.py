@@ -672,10 +672,10 @@ def test11(seed=None):
 
     environment_width = 50
     environment_height = 50
-    team_size = 30
-    runs_to_average = 100
+    team_size = 2#30
+    runs_to_average = 2#100
     max_steps = 3000
-    sensor_radius_min = 9
+    sensor_radius_min = 13#9
     sensor_radius_max = 15
 
     EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
@@ -683,18 +683,16 @@ def test11(seed=None):
 
     # Result lists for plotting
     s = [] # sensor radii
-    e = [] # simple social entropy
-    c = [] # average completion time
+    r = [] # ratio of roomba
+    c = [] # completion times (average and std dev can be computed after)
 
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
         for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
             total = 0
             i = 0
             num_roomba = team_size - num_drones
-            proportion_roomba = num_roomba / team_size
-            proportion_drone = num_drones / team_size
-            simple_social_entropy = -proportion_roomba * (0 if proportion_roomba == 0 else math.log(proportion_roomba,2)) \
-                                    -proportion_drone * (0 if proportion_drone == 0 else math.log(proportion_drone,2))
+            ratio_roomba = num_roomba / team_size
+            completion_times = []
             for env in copy.deepcopy(envs):
                 i+=1
                 for n in range(num_roomba):
@@ -707,27 +705,27 @@ def test11(seed=None):
 
                 env.run(max_steps)
                 total += env.t
+                completion_times.append(env.t)
 
-            average_completion_time = float(total)/len(envs)
             s.append(sensor_radius)
-            e.append(simple_social_entropy)
-            c.append(average_completion_time)
+            r.append(ratio_roomba)
+            c.append(completion_times)
 
         # After iterating over all teams, save current data
-        test11_data = {"s": s, "e": e, "c": c}
+        test11_data = {"sensor_radius": s, "ratio_roomba": r, "completion_times": c}
         pickle.dump(test11_data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
 
     print(f"s={s}")
-    print(f"e={e}")
+    print(f"r={r}")
     print(f"c={c}")
     # 3D Scatterplot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(s, e, c, marker='o')
+    ax.scatter(s, r, [sum(completion_times) / runs_to_average for completion_times in c], marker='o')
     ax.set_title('%s x %s Environment of %s(), seed=%s, team size=%s, agent types=2, averaged over %s runs each' \
               % (environment_width, environment_height, inspect.stack()[0][3], seed, team_size, runs_to_average))
     ax.set_xlabel('Sensor Radius')
-    ax.set_ylabel('Simple Social Entropy')
+    ax.set_ylabel('Ratio of Roomba')
     ax.set_zlabel('Average Completion Time')
     plt.show()
 
