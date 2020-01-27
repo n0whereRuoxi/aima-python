@@ -706,7 +706,7 @@ def test11(seed=None):
 
 
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             # Start the load operations and mark each future with its URL
             future_to_tuple = {executor.submit(evaluate_team, sensor_radius, num_drones, team_size, runs_to_average): num_drones for num_drones in range(0, team_size)}
             for future in concurrent.futures.as_completed(future_to_tuple):
