@@ -13,6 +13,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from tqdm import tqdm
+import concurrent.futures
 import pickle
 
 # import my files
@@ -681,10 +682,10 @@ def test11(seed=None):
     EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
     envs = [EnvFactory() for i in range(runs_to_average)]
 
-    # Result lists for plotting
-    s = [] # sensor radii
-    r = [] # ratio of roomba
-    c = [] # completion times (average and std dev can be computed after)
+    # Result lists for plotting should be a list of tuples
+    # Every tuple will be structured as follows:
+    # (sensor radius [int], ratio of roomba [double], completion times [list])
+    data = []
 
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
         for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
@@ -707,21 +708,20 @@ def test11(seed=None):
                 total += env.t
                 completion_times.append(env.t)
 
-            s.append(sensor_radius)
-            r.append(ratio_roomba)
-            c.append(completion_times)
+            data.append((sensor_radius, ratio_roomba, completion_times))
 
         # After iterating over all teams, save current data
-        test11_data = {"sensor_radius": s, "ratio_roomba": r, "completion_times": c}
-        pickle.dump(test11_data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
+        pickle.dump(data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
 
-    print(f"s={s}")
-    print(f"r={r}")
-    print(f"c={c}")
+    print(f"data={data}")
+
     # 3D Scatterplot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(s, r, [sum(completion_times) / runs_to_average for completion_times in c], marker='o')
+    sensor_data = [tup[0] for tup in data]
+    ratio_data = [tup[1] for tup in data]
+    completion_data = [tup[2] for tup in data]
+    ax.scatter(sensor_data, ratio_data, [sum(completion_times) / runs_to_average for completion_times in completion_data], marker='o')
     ax.set_title('%s x %s Environment of %s(), seed=%s, team size=%s, agent types=2, averaged over %s runs each' \
               % (environment_width, environment_height, inspect.stack()[0][3], seed, team_size, runs_to_average))
     ax.set_xlabel('Sensor Radius')
