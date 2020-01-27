@@ -673,7 +673,7 @@ def test11(seed=None):
 
     environment_width = 50
     environment_height = 50
-    team_size = 2#30
+    team_size = 6#30
     runs_to_average = 2#100
     max_steps = 3000
     sensor_radius_min = 13#9
@@ -687,28 +687,36 @@ def test11(seed=None):
     # (sensor radius [int], ratio of roomba [double], completion times [list])
     data = []
 
+    def evaluate_team(sensor_radius, num_drones, team_size, runs_to_average):
+        num_roomba = team_size - num_drones
+        ratio_roomba = num_roomba / team_size
+        completion_times = []
+        for env in [EnvFactory() for i in range(runs_to_average)]:
+            for n in range(num_roomba):
+                env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                            location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
+
+            for n in range(num_drones):
+                env.add_object(NewGreedyDrone(sensor_radius=sensor_radius, communication=True),
+                             location=(random.randrange(1, environment_width-2), random.randrange(1, environment_width-2))).id = n + 1
+
+            env.run(max_steps)
+            completion_times.append(env.t)
+        return (sensor_radius, ratio_roomba, completion_times)
+
+
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
-        for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
-            total = 0
-            i = 0
-            num_roomba = team_size - num_drones
-            ratio_roomba = num_roomba / team_size
-            completion_times = []
-            for env in copy.deepcopy(envs):
-                i+=1
-                for n in range(num_roomba):
-                    env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
-                                location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
-
-                for n in range(num_drones):
-                    env.add_object(NewGreedyDrone(sensor_radius=sensor_radius, communication=True),
-                                 location=(random.randrange(1, environment_width-2), random.randrange(1, environment_width-2))).id = n + 1
-
-                env.run(max_steps)
-                total += env.t
-                completion_times.append(env.t)
-
-            data.append((sensor_radius, ratio_roomba, completion_times))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            # Start the load operations and mark each future with its URL
+            future_to_tuple = {executor.submit(evaluate_team, sensor_radius, num_drones, team_size, runs_to_average): num_drones for num_drones in range(0, team_size)}
+            for future in concurrent.futures.as_completed(future_to_tuple):
+                num_drone = future_to_tuple[future]
+                try:
+                    data_tuple = future.result()
+                except Exception as exc:
+                    print('Error: %d num drones generated an exception: %s' % (num_drone, exc))
+                else:
+                    data.append(data_tuple)
 
         # After iterating over all teams, save current data
         pickle.dump(data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
