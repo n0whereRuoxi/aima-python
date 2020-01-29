@@ -141,29 +141,33 @@ class Environment:
             # increment time counter
             self.t += 1
 
-            for a in self.agents:
-                a.percepts = self.percept(a)
+            for agent in self.agents:
+                agent.percepts = self.percept(agent)
 
             self.communicator.setup()
             for from_agent in self.agents:  # TODO: how to add communication as an action?
                 self.communicate(from_agent)
 
-            for a in self.agents:
-                if hasattr(a, 'state_estimator'):
-                    if hasattr(a, 'state'):
-                        a.percepts = a.state_estimator(a.percepts, a.comms, state=a.state)
+            for agent in self.agents:
+                if hasattr(agent, 'state_estimator'):
+                    if hasattr(agent, 'state'):
+                        agent.state = agent.state_estimator(agent.percepts, agent.comms, state=agent.state)
                     else:
-                        a.percepts = a.state_estimator(a.percepts, a.comms)
+                        pass    # is there anything that we want to do here?
                 else:       # if there is no state_estimator() then just passthrough the percepts to the state
-                    a.state = a.percepts
+                    #agent.state = agent.percepts
+                    pass
 
             # for each agent
             # run agent.program with the agent's state as an input
             # agent's perception = Env.state(agent)
 
             # generate actions
-            actions = [agent.program(agent.state)
-                       for agent in self.agents]
+            if hasattr(agent, 'state'):
+                actions = [agent.program(agent.state) for agent in self.agents]
+            else:
+                actions = [agent.program(agent.percepts) for agent in self.agents]
+
 
             # for each agent-action pair, have the environment process the actions
             for (agent, action) in zip(self.agents, actions):
