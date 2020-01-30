@@ -40,10 +40,18 @@ class RangePerceptor(Perceptor):
         else:
             objs = self.env.objects_near(agent.location, self.default_r)
         #if ('Dirt', (9, 15)) in [(o.__class__.__name__,o.location) for o in objs]: print('wtf')
-        return {'Objects':[('Agent' if isinstance(o,agents.Agent) else o.__class__.__name__, o.location)
+        return {'Objects':[(self.name_of_object(o), o.location)
                 for o in objs]}
         #return {'Objects':[('Agent' if isinstance(obj,agents.Agent) else obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
         #        for obj in objs]}
+
+    def name_of_object(self, obj):
+        if isinstance(obj, agents.GreedyDrone):
+            return 'Drone'
+        elif isinstance(obj, agents.Agent):
+            return 'Roomba'
+        else:
+            return obj.__class__.__name__
 
 class GPSPerceptor(Perceptor):
     def percept(self, agent):

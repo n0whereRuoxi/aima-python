@@ -624,18 +624,21 @@ def test7(seed=None):
     # set a seed to provide repeatable outcomes each run
     set_seed(seed) # if the seed wasn't set in the input, the default value of none will create (and store) a random seed
 
-    e = NewVacuumEnvironment(width=20, height=20, config="random dirt")
-    ef = EnvFrame(e,root=tk.Tk(), cellwidth=30,
+    e = NewVacuumEnvironment(width=50, height=50, config="random dirt")
+    ef = EnvFrame(e,root=tk.Tk(), cellwidth=15,
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
-    for x in range(2):
-        for y in range(2):
-            e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
-                           location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
+    if False:
+        for x in range(2):
+            for y in range(2):
+                e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                               location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
+    for i in range(29):
+        e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
-    for i in range(2):
-        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,18), random.randrange(1,18))).id = i+1
+    for i in range(1):
+        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
     ef.configure_display()
     ef.run()

@@ -65,7 +65,7 @@ def kmeans_roomba_generator():
             dirts = list({o[1] for o in percepts['Objects'] if o[0] == 'Dirt'})
 
             if dirts:
-                vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Agent'})
+                vacuums = list({o[1] for o in percepts['Objects'] if o[0] == 'Roomba'})
                 (dirt_clusters, dirt_means) = k_means(dirts, k=len(vacuums), n=10, init=list(vacuums))
 
                 assignments = optimal_assignments(list(vacuums), dirt_means, dirt_clusters)
@@ -94,7 +94,7 @@ def greedy_roomba_generator():
             # use a set comprehension to remove duplicates and convert back to a list
             if 'Objects' in percepts:
                 dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
-                vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}   # TODO: This needs a better way to detect vacuums
+                vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Roomba'}   # TODO: This needs a better way to detect vacuums
                 unoccupied_dirts = list(dirts - vacuums)
             else:
                 dirts = set()
