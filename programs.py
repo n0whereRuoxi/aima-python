@@ -92,9 +92,14 @@ def greedy_roomba_generator():
             agent_heading = percepts['Compass']
             # collect communication data
             # use a set comprehension to remove duplicates and convert back to a list
-            dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
-            vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}   # TODO: This needs a better way to detect vacuums
-            unoccupied_dirts = list(dirts-vacuums)
+            if 'Objects' in percepts:
+                dirts = {o[1] for o in percepts['Objects'] if o[0] == 'Dirt'}
+                vacuums = {o[1] for o in percepts['Objects'] if o[0] == 'Agent'}   # TODO: This needs a better way to detect vacuums
+                unoccupied_dirts = list(dirts - vacuums)
+            else:
+                dirts = set()
+                vacuums = set()
+                unoccupied_dirts = set()
 
             if unoccupied_dirts:
                 nearest_dirt = find_nearest(agent_location, unoccupied_dirts)
@@ -106,11 +111,11 @@ def greedy_roomba_generator():
 
 def greedy_drone_generator(sensor_radius):
     def p_greedy_drone(percepts):
-        agent_location = (0,0)
+        agent_location = percepts['GPS']
         agent_heading = percepts['Compass']
         # collect communication data
         dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
-        drones = [d[1] for d in percepts['Objects'] if d[0] == 'GreedyDrone']
+        drones = [d[1] for d in percepts['Objects'] if d[0] == 'GreedyDrone' and d[1] != agent_location]
 
         if dirts:
             close_dirts = [d for d in dirts if distance2(d,agent_location)<(sensor_radius*.75)**2]

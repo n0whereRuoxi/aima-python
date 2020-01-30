@@ -153,7 +153,7 @@ class Environment:
                     if hasattr(agent, 'state'):
                         agent.state = agent.state_estimator(agent.percepts, agent.comms, state=agent.state)
                     else:
-                        pass    # is there anything that we want to do here?
+                        agent.percepts = agent.state_estimator(agent.percepts, agent.comms)    # is there anything that we want to do here?
                 else:       # if there is no state_estimator() then just passthrough the percepts to the state
                     #agent.state = agent.percepts
                     pass
@@ -933,8 +933,8 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test17(seed=None, kmeans=True)
-    #test16()
+    #test17(seed=None, kmeans=True)
+    test7()
     #test_all()
 
 if __name__ == "__main__":
