@@ -149,6 +149,31 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
     plt.ylabel('Avg Completion Time')
     plt.show()
 
+def plotBestTeamsNew(environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius):
+    filename = "../../test11_%s_%s_%s_%s_%s_iter%s.p" % (environment_width, environment_height, team_size, runs_to_average, max_steps, sensor_radius)
+    test_11_data = pickle.load(open(filename, "rb"))
+
+    # Plot Avg Completion Time vs Roomba Ratio
+    sensor_radii_to_plot = [15]#[15, 14, 13, 12, 11, 10, 9]
+    plt.gca().set_prop_cycle(plt.cycler('color', plt.cm.jet(np.linspace(0, 0.9, len(sensor_radii_to_plot)))))
+    for j, sensor_radii in enumerate(sensor_radii_to_plot):
+        filtered_data = list(filter(lambda tup: tup[0] == sensor_radii, test_11_data))
+
+        # Extract sensor radius, ratio, and completion time
+        s = [tup[0] for tup in filtered_data]
+        r = [tup[1] for tup in filtered_data]
+        c = [np.average(tup[2]) for tup in filtered_data]
+
+        plt.plot(r, c)
+
+
+    legend = ["sensor_radius=" + str(x) for x in sensor_radii_to_plot]
+    plt.legend(legend, loc='upper left')
+    plt.title('Roomba/Drone Teams of Size %s for varying drone sensor_radius (%sx%s env, average over %s samples each)' % (team_size, environment_height, environment_width, runs_to_average))
+    plt.xlabel('Ratio of Roomba')
+    plt.ylabel('Avg Completion Time')
+    plt.show()
+
 def smoothData(data, windowSize):
     # Window size should be odd
     smoothedData = []
@@ -173,7 +198,7 @@ def annot_min(x,y, ax=None):
 def main():
     #plotTest11()
     #plotTest11PickleDataRatio(50,50,30,20,3000,15)
-    plotBestTeams(50,50,30,100,3000,15)
+    plotBestTeamsNew(50,50,6,2,3000,15)
 
 if __name__ == "__main__":
     # execute only if run as a script
