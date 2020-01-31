@@ -115,7 +115,7 @@ def greedy_drone_generator(sensor_radius):
         agent_heading = percepts['Compass']
         # collect communication data
         dirts = [o[1] for o in percepts['Objects'] if o[0] == 'Dirt']
-        drones = [d[1] for d in percepts['Objects'] if d[0] == 'GreedyDrone' and d[1] != agent_location]
+        drones = [d[1] for d in percepts['Objects'] if d[0] == 'Drone' and d[1] != agent_location]
 
         if dirts:
             close_dirts = [d for d in dirts if distance2(d,agent_location)<(sensor_radius*.75)**2]
@@ -126,18 +126,18 @@ def greedy_drone_generator(sensor_radius):
 
             if drones:  # if there are drones around, move away from them by half your sensor radius
                 targets = [target]
-                for d in [d for d in drones if distance2(d, agent_location) < (sensor_radius * .5) ** 2]:
-                    targets.append(vector_add(scalar_vector_product(
-                        sensor_radius * .5, vector_add(agent_location, scalar_vector_product(-1, d))),
-                                              agent_location))
+                for d in [d for d in drones if distance2(d, agent_location) < (sensor_radius) ** 2]:
+                    targets.append(vector_add(scalar_vector_product(sensor_radius * .5,
+                                   vector_add(agent_location, scalar_vector_product(-1, d))), agent_location))
                 target = vector_average(targets)
 
             command = go_to(agent_location, agent_heading, target, bump=False)
             return command
         elif drones: # if no dirts, but there are drones around
             targets = []
-            for d in [d for d in drones if distance2(d,agent_location)<(sensor_radius*.5)**2]:
-                targets.append(vector_add(scalar_vector_product(sensor_radius*.5, vector_add(agent_location,scalar_vector_product(-1,d))),agent_location))
+            for d in [d for d in drones if distance2(d, agent_location) < (sensor_radius) ** 2]:
+                targets.append(vector_add(scalar_vector_product(sensor_radius*.5,
+                               vector_add(agent_location,scalar_vector_product(-1,d))),agent_location))
             if targets:
                 target = vector_average(targets)
                 return go_to(agent_location, agent_heading, target, bump=False)
@@ -175,6 +175,12 @@ def basic_state_estimator_generator():
 
         # convert dirts to a set to remove duplicates and convert back to a list
         percepts['Objects'] = list(set(percepts['Objects']))  # note: does not preserve order
+
+        for o in percepts['Objects']:
+            if o[1][0] > 19 or o[1][1] > 19:
+                pass
+                # TODO: add a verbose flag so that print stmts don't spam terminal
+                # print(percepts['GPS'], o)
 
         return percepts
     return se_basic_state_estimator
