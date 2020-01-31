@@ -630,10 +630,10 @@ def test7(seed=None):
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
-    for i in range(29):
+    for i in range(20):
         e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
-    for i in range(1):
+    for i in range(10):
         e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
     ef.configure_display()
