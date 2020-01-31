@@ -37,8 +37,7 @@ class GrabObject(Actuator):
     def actuate(self, agent, params=None):
         # check to see if any objects at the Agent's location are grabbable by the Agent
         if random.random() <= params.get('probability',1):
-            objs = [obj for obj in self.env.objects_at(agent.location)
-                if (obj != agent and obj.is_grabbable(agent))]
+            objs = [obj for obj in self.env.objects_at(agent.location) if (obj != agent and obj.is_grabbable(agent))]
             # if so, pick up all grabbable objects and add them to the holding array
             if objs:
                 agent.holding += objs

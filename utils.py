@@ -11,7 +11,8 @@ import math
 import functools
 import numpy as np
 from itertools import chain, combinations
-
+from scipy.stats import sem, t
+from scipy import mean
 
 # ______________________________________________________________________________
 # Functions on Sequences and Iterables
@@ -245,7 +246,7 @@ def weighted_choice(choices):
         if upto + w >= r:
             return c, w
         upto += w
-	
+
 def rounder(numbers, d=4):
     """Round a single number, or sequence of numbers, to d decimal places."""
     if isinstance(numbers, (int, float)):
@@ -310,7 +311,7 @@ def elu(x, alpha=0.01):
 		return x
 	else:
 		return alpha * (math.exp(x) - 1)
-		
+
 def elu_derivative(value, alpha = 0.01):
 	if value > 0:
 		return 1
@@ -337,7 +338,7 @@ def leaky_relu_derivative(value, alpha=0.01):
 
 def relu(x):
 	return max(0, x)
-		
+
 def step(x):
     """Return activation value of x with sign function"""
     return 1 if x >= 0 else 0
@@ -347,6 +348,24 @@ def gaussian(mean, st_dev, x):
     """Given the mean and standard deviation of a distribution, it returns the probability of x."""
     return 1 / (math.sqrt(2 * math.pi) * st_dev) * math.e ** (-0.5 * (float(x - mean) / st_dev) ** 2)
 
+def confidence_interval(data, confidence=0.95):
+    """
+    params:
+        data: an list of numbers
+        confidence: float from 0.0 - 1.0
+
+    returns:
+        mean
+        lower bound of interval
+        upper bound of interval
+    """
+    n = len(data)
+    m = mean(data)
+    std_err = sem(data)
+    h = std_err * t.ppf((1 + confidence) / 2, n - 1)
+    start = m - h
+    end = m + h
+    return m, start, end
 
 try:  # math.isclose was added in Python 3.5; but we might be in 3.4
     from math import isclose
@@ -749,7 +768,7 @@ class Queue:
     Note that isinstance(Stack(), Queue) is false, because we implement stacks
     as lists.  If Python ever gets interfaces, Queue will be an interface."""
 
-    def __init__(self): 
+    def __init__(self):
         pass
 
     def extend(self, items):
@@ -765,8 +784,8 @@ class FIFOQueue(Queue):
     def __len__(self):
         return len(self.A) - self.start
     def extend(self, items):
-        self.A.extend(items)     
-    def pop(self):        
+        self.A.extend(items)
+    def pop(self):
         e = self.A[self.start]
         self.start += 1
         if self.start > 5 and self.start > len(self.A)/2:
@@ -862,7 +881,7 @@ F = Bool(False)
 
 ## Fig: The idea is we can define things like Fig[3,10] later.
 ## Alas, it is Fig[3,10] not Fig[3.10], because that would be the same as Fig[3.1]
-Fig = {} 
+Fig = {}
 
 #______________________________________________________________________________
 # Mark's Helpers
@@ -894,10 +913,10 @@ def update(x, **entries):
     Struct(a=10, b=20)
     """
     if isinstance(x, dict):
-        x.update(entries)   
+        x.update(entries)
     else:
-        x.__dict__.update(entries) 
-    return x 
+        x.__dict__.update(entries)
+    return x
 
 def if_(test, result, alternative):
     """Like C++ and Java's (test ? result : alternative), except

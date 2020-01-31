@@ -1,5 +1,6 @@
 from utils import vector_add
 from objects import *
+import agents
 
 class Perceptor():
     def __init__(self, env):
@@ -22,6 +23,11 @@ class DirtyPerceptor(Perceptor):
     def percept(self, agent):
         return {'Dirty':len(self.env.find_at(Dirt, agent.location))>0}
 
+class DirtsCleanedPerceptor(Perceptor):
+    def percept(self, agent):
+        return {'Cleaned':set(self.env.find_at(Dirt, agent))}
+
+
 class BumpPerceptor(Perceptor):
     def percept(self, agent):
         return {'Bump':len([o for o in self.env.objects_at(vector_add(agent.location, agent.heading)) if o.blocker])>0}
@@ -33,8 +39,19 @@ class RangePerceptor(Perceptor):
             objs = self.env.objects_near(agent.location, agent.sensor_r)
         else:
             objs = self.env.objects_near(agent.location, self.default_r)
-        return {'Objects':[(obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
-                for obj in objs]}
+        #if ('Dirt', (9, 15)) in [(o.__class__.__name__,o.location) for o in objs]: print('wtf')
+        return {'Objects':[(self.name_of_object(o), o.location)
+                for o in objs]}
+        #return {'Objects':[('Agent' if isinstance(obj,agents.Agent) else obj.__class__.__name__, (obj.location[0]-agent.location[0],obj.location[1]-agent.location[1]))
+        #        for obj in objs]}
+
+    def name_of_object(self, obj):
+        if isinstance(obj, agents.GreedyDrone):
+            return 'Drone'
+        elif isinstance(obj, agents.Agent):
+            return 'Roomba'
+        else:
+            return obj.__class__.__name__
 
 class GPSPerceptor(Perceptor):
     def percept(self, agent):

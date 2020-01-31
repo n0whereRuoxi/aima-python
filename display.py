@@ -128,8 +128,11 @@ class EnvFrame(tk.Frame):
                         'GreedyAgent':'robot-%s',
                         'RandomReflexAgent':'robot-%s',
                         'GreedyAgentWithoutRangePerception':'robot-%s',
+                        'KMeansAgentWithNetworkComms':'robot-%s',
                         'GreedyDrone':'drone-%s',
+                        'Truck':'truck-%s',
                         'Dirt':'dirt',
+                        'Recycle':'recycle',
                         'Wall':'wall',
                         'Fire':'fire'}
         self.file2image = {'':None, 'robot-right':itk.PhotoImage(Image.open('img/robot-right.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
@@ -140,7 +143,12 @@ class EnvFrame(tk.Frame):
                        'drone-left':itk.PhotoImage(Image.open('img/drone-left.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-up':itk.PhotoImage(Image.open('img/drone-up.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-down':itk.PhotoImage(Image.open('img/drone-down.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-right':itk.PhotoImage(Image.open('img/truck-right.png').resize((int(0.8*cellwidth),int(0.42*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-left':itk.PhotoImage(Image.open('img/truck-left.png').resize((int(0.8*cellwidth),int(0.42*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-up':itk.PhotoImage(Image.open('img/truck-up.png').resize((int(0.42*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
+                       'truck-down':itk.PhotoImage(Image.open('img/truck-down.png').resize((int(0.42*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'dirt':itk.PhotoImage(Image.open('img/dirt.png').resize((int(0.8*cellwidth),int(0.4*cellwidth)),resample=Image.LANCZOS)),
+                       'recycle':itk.PhotoImage(Image.open('img/recycle.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'wall':itk.PhotoImage(Image.open('img/wall.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'fire':itk.PhotoImage(Image.open('img/fire.png').resize((int(0.55*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS))}
         # note up and down are switched, since (0,0) is in the upper left
@@ -157,9 +165,9 @@ class EnvFrame(tk.Frame):
                 ms = int(1000 * max(float(self.delay), 0.01))
                 self.after(ms, self.background_run)
 
-    def run(self):
+    def run(self, pause=False):
         print('run')
-        self.running = 1
+        self.running = not pause
         self.background_run()
 
     def next_step(self):
@@ -168,7 +176,7 @@ class EnvFrame(tk.Frame):
 
     def stop(self):
         print('stop')
-        self.running = 0
+        self.running = False
 
     def left_click(self, event):
         loc = (int(event.x / (self.cellwidth + 1)), int(event.y / (self.cellwidth + 1)))
@@ -182,7 +190,7 @@ class EnvFrame(tk.Frame):
             if isinstance(obj, Agent) and hasattr(obj, 'comms'):
                 print('percepts = %s' % obj.percepts)
                 print('comms = %s' % obj.comms)
-                print('dirts = %s' % obj.dirts)
+                print('dirts = %s' % [o for o in obj.percepts['Objects'] if o[0] == 'Dirt'])
 
     def middle_click(self, event):
         pass
