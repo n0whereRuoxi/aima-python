@@ -630,10 +630,10 @@ def test7(seed=None):
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
-    for i in range(20):
+    for i in range(10):
         e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
-    for i in range(10):
+    for i in range(20):
         e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
     ef.configure_display()
@@ -727,7 +727,7 @@ def test10(seed=None):
     plt.ylabel('time to fully clean')
     plt.show()
 
-def test11(seed=None):
+def test11(seed=None, showPlot=True):
     """
     Vary the team makeup (heterogeneity) and communication radius on the drones
     to generate a plot of average completion time vs social entropy vs sensor radius
@@ -751,36 +751,24 @@ def test11(seed=None):
     # (sensor radius [int], ratio of roomba [double], completion times [list])
     data = []
 
-    def evaluate_team(sensor_radius, num_drones, team_size, runs_to_average):
-        num_roomba = team_size - num_drones
-        ratio_roomba = num_roomba / team_size
-        completion_times = []
-        for env in [EnvFactory() for i in range(runs_to_average)]:
-            for n in range(num_roomba):
-                env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
-                            location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
-
-            for n in range(num_drones):
-                env.add_object(NewGreedyDrone(sensor_radius=sensor_radius, communication=True),
-                             location=(random.randrange(1, environment_width-2), random.randrange(1, environment_width-2))).id = n + 1
-
-            env.run(max_steps)
-            completion_times.append(env.t)
-        return (sensor_radius, ratio_roomba, completion_times)
-
-
     for sensor_radius in tqdm(range(sensor_radius_min, sensor_radius_max + 1), desc="Sensor radius iterator"):
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            # Start the load operations and mark each future with its URL
-            future_to_tuple = {executor.submit(evaluate_team, sensor_radius, num_drones, team_size, runs_to_average): num_drones for num_drones in range(0, team_size)}
-            for future in concurrent.futures.as_completed(future_to_tuple):
-                num_drone = future_to_tuple[future]
-                try:
-                    data_tuple = future.result()
-                except Exception as exc:
-                    print('Error: %d num drones generated an exception: %s' % (num_drone, exc))
-                else:
-                    data.append(data_tuple)
+        for num_drones in tqdm(range(0, team_size), desc="Num drones iterator"):
+            num_roomba = team_size - num_drones
+            ratio_roomba = num_roomba / team_size
+            completion_times = []
+            for env in [EnvFactory() for i in range(runs_to_average)]:
+                for n in range(num_roomba):
+                    env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
+                                location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
+
+                for n in range(num_drones):
+                    env.add_object(NewGreedyDrone(sensor_radius=sensor_radius, communication=True),
+                                 location=(random.randrange(1, environment_width-2), random.randrange(1, environment_width-2))).id = n + 1
+
+                env.run(max_steps)
+                completion_times.append(env.t)
+
+            data.append((sensor_radius, ratio_roomba, completion_times))
 
         # After iterating over all teams, save current data
         pickle.dump(data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
@@ -788,18 +776,19 @@ def test11(seed=None):
     print(f"data={data}")
 
     # 3D Scatterplot
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    sensor_data = [tup[0] for tup in data]
-    ratio_data = [tup[1] for tup in data]
-    completion_data = [tup[2] for tup in data]
-    ax.scatter(sensor_data, ratio_data, [sum(completion_times) / runs_to_average for completion_times in completion_data], marker='o')
-    ax.set_title('%s x %s Environment of %s(), seed=%s, team size=%s, agent types=2, averaged over %s runs each' \
-              % (environment_width, environment_height, inspect.stack()[0][3], seed, team_size, runs_to_average))
-    ax.set_xlabel('Sensor Radius')
-    ax.set_ylabel('Ratio of Roomba')
-    ax.set_zlabel('Average Completion Time')
-    plt.show()
+    if showPlot:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        sensor_data = [tup[0] for tup in data]
+        ratio_data = [tup[1] for tup in data]
+        completion_data = [tup[2] for tup in data]
+        ax.scatter(sensor_data, ratio_data, [sum(completion_times) / runs_to_average for completion_times in completion_data], marker='o')
+        ax.set_title('%s x %s Environment of %s(), seed=%s, team size=%s, agent types=2, averaged over %s runs each' \
+                  % (environment_width, environment_height, inspect.stack()[0][3], seed, team_size, runs_to_average))
+        ax.set_xlabel('Sensor Radius')
+        ax.set_ylabel('Ratio of Roomba')
+        ax.set_zlabel('Average Completion Time')
+        plt.show()
 
 def test13(seed=None):
     # set a seed to provide repeatable outcomes each run
@@ -1009,7 +998,7 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    test7()
+    test11()
     #test_all()
 
 if __name__ == "__main__":
