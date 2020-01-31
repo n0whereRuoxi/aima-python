@@ -630,11 +630,6 @@ def test7(seed=None):
                     title='Vacuum Robot Simulation - Scenario=%s(), Seed=%s' % (inspect.stack()[0][3],current_seed))
 
     # Create agents
-    if False:
-        for x in range(2):
-            for y in range(2):
-                e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
-                               location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
     for i in range(29):
         e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
@@ -1014,7 +1009,6 @@ def test_all(seed=None):
     test10(seed)
 
 def main():
-    #test17(seed=None, kmeans=True)
     test7()
     #test_all()
 

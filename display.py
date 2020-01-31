@@ -78,7 +78,7 @@ class EnvFrame(tk.Frame):
 
         tk.Frame.__init__(self, None, width=min((cellwidth + 2) * env.width,self.root.winfo_screenwidth()),
                           height=min((cellwidth + 2) * env.height, self.root.winfo_screenheight()))
-        self.root.title(title) 
+        self.root.title(title)
 
         # Toolbar
         toolbar = tk.Frame(self, relief='raised', bd=2)
@@ -122,7 +122,7 @@ class EnvFrame(tk.Frame):
                 c.create_line(j * (cellwidth + 1), 0, j * (cellwidth + 1), env.height * (cellwidth + 1))
                 c.pack(expand=1, fill='both')
         self.pack()
-        
+
         self.class2file = {'':'',
                         'GreedyAgentWithRangePerception':'robot-%s',
                         'GreedyAgent':'robot-%s',
@@ -143,10 +143,6 @@ class EnvFrame(tk.Frame):
                        'drone-left':itk.PhotoImage(Image.open('img/drone-left.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-up':itk.PhotoImage(Image.open('img/drone-up.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'drone-down':itk.PhotoImage(Image.open('img/drone-down.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
-                       'truck-right':itk.PhotoImage(Image.open('img/truck-right.png').resize((int(0.8*cellwidth),int(0.42*cellwidth)),resample=Image.LANCZOS)),
-                       'truck-left':itk.PhotoImage(Image.open('img/truck-left.png').resize((int(0.8*cellwidth),int(0.42*cellwidth)),resample=Image.LANCZOS)),
-                       'truck-up':itk.PhotoImage(Image.open('img/truck-up.png').resize((int(0.42*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
-                       'truck-down':itk.PhotoImage(Image.open('img/truck-down.png').resize((int(0.42*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'dirt':itk.PhotoImage(Image.open('img/dirt.png').resize((int(0.8*cellwidth),int(0.4*cellwidth)),resample=Image.LANCZOS)),
                        'recycle':itk.PhotoImage(Image.open('img/recycle.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
                        'wall':itk.PhotoImage(Image.open('img/wall.png').resize((int(0.8*cellwidth),int(0.8*cellwidth)),resample=Image.LANCZOS)),
