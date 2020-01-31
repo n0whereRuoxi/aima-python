@@ -727,7 +727,7 @@ def test10(seed=None):
     plt.ylabel('time to fully clean')
     plt.show()
 
-def test11(seed=None, showPlot=True):
+def test11(sensor_radius_min, sensor_radius_max, seed=None, showPlot=True):
     """
     Vary the team makeup (heterogeneity) and communication radius on the drones
     to generate a plot of average completion time vs social entropy vs sensor radius
@@ -737,11 +737,9 @@ def test11(seed=None, showPlot=True):
 
     environment_width = 50
     environment_height = 50
-    team_size = 6#30
-    runs_to_average = 2#100
+    team_size = 40
+    runs_to_average = 100
     max_steps = 3000
-    sensor_radius_min = 13#9
-    sensor_radius_max = 15
 
     EnvFactory = partial(NewVacuumEnvironment, width=environment_width, height=environment_height, config="random dirt")
     envs = [EnvFactory() for i in range(runs_to_average)]
@@ -772,8 +770,6 @@ def test11(seed=None, showPlot=True):
 
         # After iterating over all teams, save current data
         pickle.dump(data, open(f"test11_{environment_width}_{environment_height}_{team_size}_{runs_to_average}_{max_steps}_iter{sensor_radius}.p", "wb"))
-
-    print(f"data={data}")
 
     # 3D Scatterplot
     if showPlot:
