@@ -754,7 +754,7 @@ def test11(sensor_radius_min, sensor_radius_max, seed=None, showPlot=True):
             num_roomba = team_size - num_drones
             ratio_roomba = num_roomba / team_size
             completion_times = []
-            for env in [EnvFactory() for i in range(runs_to_average)]:
+            for env in tqdm([EnvFactory() for i in range(runs_to_average)], desc="Runs to avg iterator"):
                 for n in range(num_roomba):
                     env.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                                 location=(random.randrange(1, environment_width-2), random.randrange(1, environment_height-2))).id = team_size + n + 1
