@@ -167,6 +167,9 @@ def plotBestTeamsWithTupleData(environment_width, environment_height, team_size,
         r = [tup[1] for tup in filtered_data]
         c = [np.average(tup[2]) for tup in filtered_data]
 
+        # Annotate the minimum for min/max sensor radius
+        if sensor_radii == min_sensor_radius or sensor_radii == max_sensor_radius:
+            annot_min(np.array(r),np.array(c))
         plt.plot(r, c)
 
 
@@ -199,9 +202,7 @@ def annot_min(x,y, ax=None):
     ax.annotate(text, xy=(xmax, ymax), xytext=(xmax+.5,ymax+5), **kw)
 
 def main():
-    #plotTest11()
-    #plotTest11PickleDataRatio(50,50,30,20,3000,15)
-    plotBestTeamsWithTupleData(70,70,40,100,3000,9,10)
+    plotBestTeamsWithTupleData(70,70,40,100,3000,9,13)
 
 if __name__ == "__main__":
     # execute only if run as a script
