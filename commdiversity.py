@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from utils import confidence_interval
 import pickle
 import numpy as np
 
@@ -149,7 +150,21 @@ def plotBestTeams(environment_width, environment_height, team_size, runs_to_aver
     plt.ylabel('Avg Completion Time')
     plt.show()
 
-def plotBestTeamsWithTupleData(environment_width, environment_height, team_size, runs_to_average, max_steps, min_sensor_radius, max_sensor_radius):
+def get_error_bars(filtered_data):
+    """
+    Take tuple data of the form (sensor_radius, roomba ratio, [completion times])
+    and create a matrix of error bars for a 95% confidence interval
+    """
+    lower = []
+    upper = []
+    for tup in filtered_data:
+        m, start, end = confidence_interval(tup[2])
+        half_bar = (end - start) / 2
+        lower.append(half_bar)
+        upper.append(half_bar)
+    return [lower, upper]
+
+def plotBestTeamsWithTupleData(environment_width, environment_height, team_size, runs_to_average, max_steps, min_sensor_radius, max_sensor_radius, withCI=False):
     # Assumes files are spread out across multiple files with distinct data
     test_11_data = []
     for i in range(min_sensor_radius, max_sensor_radius + 1):
@@ -170,8 +185,13 @@ def plotBestTeamsWithTupleData(environment_width, environment_height, team_size,
         # Annotate the minimum for min/max sensor radius
         if sensor_radii == min_sensor_radius or sensor_radii == max_sensor_radius:
             annot_min(np.array(r),np.array(c))
-        plt.plot(r, c)
 
+        if withCI:
+            confidence_bar = get_error_bars(filtered_data)
+            plt.errorbar(r, c, yerr=confidence_bar)
+            print(confidence_bar)
+        else:
+            plt.plot(r, c)
 
     legend = ["sensor_radius=" + str(x) for x in sensor_radii_to_plot]
     plt.legend(legend, loc='upper left')
@@ -199,10 +219,12 @@ def annot_min(x,y, ax=None):
     arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=160")
     kw = dict(xycoords='data',textcoords="data",
               arrowprops=arrowprops, bbox=bbox_props, ha="left", va="top")
-    ax.annotate(text, xy=(xmax, ymax), xytext=(xmax+.5,ymax+5), **kw)
+    ax.annotate(text, xy=(xmax, ymax), xytext=(xmax+0.1,ymax-30), **kw)
 
 def main():
-    plotBestTeamsWithTupleData(70,70,40,100,3000,9,13)
+    # Parameters are
+    # environment_width, environment_height, team_size, runs_to_average, max_steps, min_sensor_radius, max_sensor_radius, withCI=False
+    plotBestTeamsWithTupleData(50,50,30,100,3000,9,9, withCI=True)
 
 if __name__ == "__main__":
     # execute only if run as a script
