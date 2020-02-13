@@ -638,11 +638,12 @@ def test7(seed=None):
             for y in range(2):
                 e.add_object(NewGreedyAgentWithoutRangePerception(communication=True),
                                location=(1 + x * (e.width - 3), 1 + y * (e.height - 3))).id = x * 2 + y + 1
-    for i in range(10):
-        e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
+    else:
+        for i in range(29):
+            e.add_object(NewGreedyAgentWithoutRangePerception(communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
-    for i in range(20):
-        e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
+        for i in range(1):
+            e.add_object(NewGreedyDrone(sensor_radius=10, communication=True), location=(random.randrange(1,e.width-2), random.randrange(1,e.height-2))).id = i+1
 
     ef.configure_display()
     ef.run()
